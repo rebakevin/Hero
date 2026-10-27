@@ -1,0 +1,41 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function verified() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+    function studentEmail() { return request.auth.token.email.matches('.*@alustudent[.]com'); }
+    function staffEmail() { return request.auth.token.email.matches('.*@alueducation[.]com'); }
+
+    function isStudent() {
+      return verified() && studentEmail()
+        && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'student';
+    }
+
+    // The student named in the path may add or remove photos while the report either does not
+    // exist yet (new report, or leftovers of a failed submit) or is theirs and still submitted.
+    function ownerCanChange(uid, reportId) {
+      let reportPath = /databases/(default)/documents/reports/$(reportId);
+      return isStudent()
+        && request.auth.uid == uid
+        && (!firestore.exists(reportPath)
+            || (firestore.get(reportPath).data.reporterId == uid
+                && firestore.get(reportPath).data.status == 'submitted'));
+    }
+
+    match /reportPhotos/{uid}/{reportId}/{fileName} {
+      allow read: if verified() && (studentEmail() || staffEmail());
+
+      allow create: if ownerCanChange(uid, reportId)
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType == 'image/jpeg'
+        && fileName.matches('[A-Za-z0-9_-]{8,64}[.]jpg');
+
+      // Files are immutable: replace a photo by uploading a new one under a new name.
+      allow update: if false;
+
+      allow delete: if ownerCanChange(uid, reportId);
+    }
+  }
+}

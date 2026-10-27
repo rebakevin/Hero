@@ -1,0 +1,274 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Reference data (keep in sync with the app constants) ----------
+
+    function categories() {
+      return ['facilities', 'water', 'electricity', 'furniture', 'sanitation', 'safety'];
+    }
+    function buildings() {
+      return ['learningCommons', 'enterpriseCommons', 'socialCommons', 'parking', 'garden', 'hostels'];
+    }
+    function statuses() { return ['submitted', 'inProgress', 'resolved', 'rejected']; }
+    function priorities() { return ['low', 'medium', 'high', 'urgent']; }
+
+    // ---------- Identity ----------
+
+    function verified() {
+      return request.auth != null && request.auth.token.email_verified == true;
+    }
+    function studentEmail() { return request.auth.token.email.matches('.*@alustudent[.]com'); }
+    function staffEmail() { return request.auth.token.email.matches('.*@alueducation[.]com'); }
+    function signedIn() { return verified() && (studentEmail() || staffEmail()); }
+
+    function userPath(uid) { return /databases/$(database)/documents/users/$(uid); }
+    function reportPath(id) { return /databases/$(database)/documents/reports/$(id); }
+    function role() { return get(userPath(request.auth.uid)).data.role; }
+
+    function isStudent() { return verified() && studentEmail() && role() == 'student'; }
+    function isStaff() { return verified() && staffEmail() && role() == 'staff'; }
+
+    function myName() { return get(userPath(request.auth.uid)).data.displayName; }
+
+    // ---------- Shared validators ----------
+
+    function validName(n) { return n is string && n.size() >= 2 && n.size() <= 50; }
+
+    function reportKeys() {
+      return ['title', 'titleLower', 'description', 'category', 'building', 'room', 'photoPaths',
+              'status', 'priority', 'lastHistoryId', 'reporterId', 'reporterName', 'upvoteCount',
+              'createdAt', 'updatedAt'];
+    }
+
+    function validReportContent(d) {
+      return d.title is string && d.title.size() >= 5 && d.title.size() <= 80
+        && d.titleLower is string && d.titleLower == d.title.lower()
+        && d.description is string && d.description.size() >= 10 && d.description.size() <= 1000
+        && d.category in categories()
+        && d.building in buildings()
+        && d.room is string && d.room.size() <= 40
+        && d.photoPaths is list && d.photoPaths.size() <= 5;
+    }
+
+    function changedKeys() {
+      return request.resource.data.diff(resource.data).affectedKeys();
+    }
+
+    // ---------- users/{uid} ----------
+
+    match /users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isStaff());
+
+      // Created by the client on the first verified sign-in. Role is always student.
+      allow create: if verified() && studentEmail()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['displayName', 'email', 'role', 'createdAt'])
+        && request.resource.data.keys().hasAll(['displayName', 'email', 'role', 'createdAt'])
+        && validName(request.resource.data.displayName)
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.role == 'student'
+        && request.resource.data.createdAt == request.time;
+
+      // Students may edit only their display name.
+      allow update: if isStudent()
+        && request.auth.uid == uid
+        && changedKeys().hasOnly(['displayName'])
+        && validName(request.resource.data.displayName);
+
+      allow delete: if false;
+
+      // ---------- users/{uid}/notifications/{id} ----------
+
+      match /notifications/{id} {
+        allow read: if signedIn() && request.auth.uid == uid;
+
+        // The recipient may only mark a notification as read.
+        allow update: if isStudent() && request.auth.uid == uid
+          && changedKeys().hasOnly(['read'])
+          && resource.data.read == false
+          && request.resource.data.read == true;
+
+        // Used when the reporter deletes their own report.
+        allow delete: if isStudent() && request.auth.uid == uid;
+
+        // Staff only, and only in the same batch as the report update it describes.
+        allow create: if validNotification(uid);
+      }
+    }
+
+    function validNotification(recipientUid) {
+      let n = request.resource.data;
+      let rp = reportPath(n.reportId);
+      let before = get(rp).data;
+      let after = getAfter(rp).data;
+      let statusChanged = before.status != after.status;
+      let priorityChanged = before.priority != after.priority;
+      return isStaff()
+        && n.keys().hasOnly(['reportId', 'reportTitle', 'type', 'status', 'priority', 'message', 'read', 'createdAt'])
+        && n.keys().hasAll(['reportId', 'reportTitle', 'type', 'status', 'priority', 'message', 'read', 'createdAt'])
+        && n.reportId is string
+        && after.reporterId == recipientUid
+        && after.updatedAt == request.time
+        && n.reportTitle == after.title
+        && n.status == after.status
+        && n.priority == after.priority
+        && n.message is string && n.message.size() >= 1 && n.message.size() <= 200
+        && n.read == false
+        && n.createdAt == request.time
+        && ((n.type == 'both' && statusChanged && priorityChanged)
+            || (n.type == 'statusChange' && statusChanged && !priorityChanged)
+            || (n.type == 'priorityChange' && !statusChanged && priorityChanged));
+    }
+
+    // ---------- reports/{reportId} ----------
+
+    match /reports/{reportId} {
+      allow read: if signedIn();
+
+      // A student files a report; the initial history entry must be written in the same batch.
+      allow create: if isStudent()
+        && request.resource.data.keys().hasOnly(reportKeys())
+        && request.resource.data.keys().hasAll(reportKeys())
+        && validReportContent(request.resource.data)
+        && request.resource.data.status == 'submitted'
+        && request.resource.data.priority == null
+        && request.resource.data.lastHistoryId == 'initial'
+        && request.resource.data.reporterId == request.auth.uid
+        && request.resource.data.reporterName == myName()
+        && request.resource.data.upvoteCount == 0
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.updatedAt == request.time
+        && existsAfter(/databases/$(database)/documents/reports/$(reportId)/history/initial);
+
+      // Owner edits content while the report is still submitted.
+      allow update: if isStudent()
+        && resource.data.reporterId == request.auth.uid
+        && resource.data.status == 'submitted'
+        && changedKeys().hasOnly(['title', 'titleLower', 'description', 'category', 'building',
+                                  'room', 'photoPaths', 'updatedAt'])
+        && validReportContent(request.resource.data)
+        && request.resource.data.updatedAt == request.time;
+
+      // Staff change status and/or priority; a history entry must be written in the same batch.
+      allow update: if isStaff()
+        && changedKeys().hasOnly(['status', 'priority', 'lastHistoryId', 'updatedAt'])
+        && request.resource.data.status in statuses()
+        && (request.resource.data.priority == null || request.resource.data.priority in priorities())
+        && (request.resource.data.status != resource.data.status
+            || request.resource.data.priority != resource.data.priority)
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.lastHistoryId is string
+        && request.resource.data.lastHistoryId != resource.data.lastHistoryId
+        && existsAfter(/databases/$(database)/documents/reports/$(reportId)/history/$(request.resource.data.lastHistoryId));
+
+      // "Me too" vote: counter moves by exactly one, together with the vote document.
+      allow update: if isStudent()
+        && resource.data.reporterId != request.auth.uid
+        && changedKeys().hasOnly(['upvoteCount'])
+        && (
+          (request.resource.data.upvoteCount == resource.data.upvoteCount + 1
+            && !exists(/databases/$(database)/documents/reports/$(reportId)/upvotes/$(request.auth.uid))
+            && existsAfter(/databases/$(database)/documents/reports/$(reportId)/upvotes/$(request.auth.uid)))
+          ||
+          (request.resource.data.upvoteCount == resource.data.upvoteCount - 1
+            && exists(/databases/$(database)/documents/reports/$(reportId)/upvotes/$(request.auth.uid))
+            && !existsAfter(/databases/$(database)/documents/reports/$(reportId)/upvotes/$(request.auth.uid)))
+        );
+
+      // Owner deletes while submitted. Staff can never delete.
+      allow delete: if isStudent()
+        && resource.data.reporterId == request.auth.uid
+        && resource.data.status == 'submitted';
+
+      // ---------- reports/{reportId}/upvotes/{uid} ----------
+
+      match /upvotes/{uid} {
+        allow read: if signedIn();
+
+        allow create: if isStudent()
+          && request.auth.uid == uid
+          && request.resource.data.keys().hasOnly(['createdAt'])
+          && request.resource.data.createdAt == request.time
+          && get(reportPath(reportId)).data.reporterId != uid
+          && getAfter(reportPath(reportId)).data.upvoteCount
+               == get(reportPath(reportId)).data.upvoteCount + 1;
+
+        // Voter removes their vote (counter -1 in the same batch) ...
+        allow delete: if isStudent()
+          && request.auth.uid == uid
+          && getAfter(reportPath(reportId)).data.upvoteCount
+               == get(reportPath(reportId)).data.upvoteCount - 1;
+
+        // ... or the report owner deletes the whole report.
+        allow delete: if isStudent()
+          && get(reportPath(reportId)).data.reporterId == request.auth.uid
+          && get(reportPath(reportId)).data.status == 'submitted'
+          && !existsAfter(reportPath(reportId));
+
+        allow update: if false;
+      }
+
+      // ---------- reports/{reportId}/history/{entryId} ----------
+
+      match /history/{entryId} {
+        allow read: if signedIn();
+
+        allow create: if initialHistoryEntry(reportId, entryId) || staffHistoryEntry(reportId, entryId);
+
+        allow update: if false;
+
+        // Only as part of the owner deleting their submitted report.
+        allow delete: if isStudent()
+          && get(reportPath(reportId)).data.reporterId == request.auth.uid
+          && get(reportPath(reportId)).data.status == 'submitted'
+          && !existsAfter(reportPath(reportId));
+      }
+    }
+
+    function historyKeys() {
+      return ['actorId', 'actorName', 'actorRole', 'fromStatus', 'toStatus',
+              'fromPriority', 'toPriority', 'note', 'createdAt'];
+    }
+
+    // First "Submitted" entry, written together with the new report.
+    function initialHistoryEntry(reportId, entryId) {
+      let h = request.resource.data;
+      return isStudent()
+        && entryId == 'initial'
+        && !exists(reportPath(reportId))
+        && getAfter(reportPath(reportId)).data.reporterId == request.auth.uid
+        && h.keys().hasOnly(historyKeys())
+        && h.keys().hasAll(historyKeys())
+        && h.actorId == request.auth.uid
+        && h.actorName == myName()
+        && h.actorRole == 'student'
+        && h.fromStatus == null
+        && h.toStatus == 'submitted'
+        && h.fromPriority == null
+        && h.toPriority == null
+        && h.note == 'Report submitted'
+        && h.createdAt == request.time;
+    }
+
+    // Entry for a staff status/priority change, written together with the report update.
+    function staffHistoryEntry(reportId, entryId) {
+      let h = request.resource.data;
+      let before = get(reportPath(reportId)).data;
+      let after = getAfter(reportPath(reportId)).data;
+      return isStaff()
+        && h.keys().hasOnly(historyKeys())
+        && h.keys().hasAll(historyKeys())
+        && after.lastHistoryId == entryId
+        && h.actorId == request.auth.uid
+        && h.actorName == myName()
+        && h.actorRole == 'staff'
+        && h.fromStatus == before.status
+        && h.toStatus == after.status
+        && h.fromPriority == before.priority
+        && h.toPriority == after.priority
+        && h.note is string && h.note.size() >= 3 && h.note.size() <= 300
+        && h.createdAt == request.time;
+    }
+  }
+}
