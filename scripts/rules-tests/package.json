@@ -1,0 +1,12 @@
+{
+  "name": "hero-rules-tests",
+  "private": true,
+  "description": "Firestore security rules tests for Hero (the 23 cases from Hero Database Design.md, section 8)",
+  "scripts": {
+    "test": "firebase emulators:exec --only firestore --project hero-rules-test \"node --test\""
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.0",
+    "firebase": "^12.0.0"
+  }
+}
