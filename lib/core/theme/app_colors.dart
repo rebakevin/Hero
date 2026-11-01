@@ -15,4 +15,12 @@ abstract final class AppColors {
   static const danger = Color(0xFFC62828);
   static const errorSurface = Color(0xFFFDECEA);
   static const onErrorSurface = Color(0xFF8C1D18);
+
+  // Report status and priority chips.
+  static const infoSurface = Color(0xFFE6EDF9);
+  static const onInfoSurface = Color(0xFF23467F);
+  static const warningSurface = Color(0xFFFFF1D6);
+  static const onWarningSurface = Color(0xFF7A4B00);
+  static const highSurface = Color(0xFFFDE3D2);
+  static const onHighSurface = Color(0xFF8A3A00);
 }

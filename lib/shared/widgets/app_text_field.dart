@@ -17,6 +17,10 @@ class AppTextField extends StatelessWidget {
     this.enabled = true,
     this.suffix,
     this.onSubmitted,
+    this.onChanged,
+    this.minLines,
+    this.maxLines = 1,
+    this.textCapitalization = TextCapitalization.none,
   });
 
   final String label;
@@ -30,6 +34,10 @@ class AppTextField extends StatelessWidget {
   final bool enabled;
   final Widget? suffix;
   final ValueChanged<String>? onSubmitted;
+  final ValueChanged<String>? onChanged;
+  final int? minLines;
+  final int? maxLines;
+  final TextCapitalization textCapitalization;
 
   @override
   Widget build(BuildContext context) {
@@ -47,6 +55,10 @@ class AppTextField extends StatelessWidget {
           textInputAction: textInputAction,
           autofillHints: autofillHints,
           onFieldSubmitted: onSubmitted,
+          onChanged: onChanged,
+          minLines: minLines,
+          maxLines: obscureText ? 1 : maxLines,
+          textCapitalization: textCapitalization,
           decoration: InputDecoration(hintText: hint, suffixIcon: suffix),
         ),
       ],

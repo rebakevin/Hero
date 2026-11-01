@@ -20,4 +20,7 @@ abstract final class AppSizes {
   static const buttonHeight = 52.0;
   static const minTouchTarget = 48.0;
   static const navBarHeight = 76.0;
+
+  /// Bottom padding that keeps the last list item clear of the floating button.
+  static const fabClearance = 88.0;
 }
