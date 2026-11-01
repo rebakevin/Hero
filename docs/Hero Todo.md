@@ -44,13 +44,13 @@ Goal: empty repo to a "hello" app running on a Pixel 8 emulator, wired to Fireba
 
 Goal: register, verify, log in, and land on a role-based home.
 
-- [ ] **Models and validators**: `AppUser`, email/password/name validators.
-- [ ] **Repositories**: `AuthRepository`, `UserRepository`.
-- [ ] **AuthCubit**: states for unauthenticated, unverified, verified student, verified staff; session restore on launch.
-- [ ] **Screens**: Login (with reset password), Register (student domain only), Verify email (resend, "I've verified", logout).
-- [ ] **First verified sign-in**: create `users/{uid}` if missing (W1); block until it exists.
-- [ ] **AuthGate**: routes by state and role; student cannot reach staff screens.
-- [ ] **Shell**: bottom nav (Home, My reports or Needs action, Profile) with empty tabs.
+- [x] **Models and validators**: `AppUser`, email/password/name validators.
+- [x] **Repositories**: `AuthRepository`, `UserRepository`.
+- [x] **AuthCubit**: states for unauthenticated, unverified, verified student, verified staff; session restore on launch.
+- [x] **Screens**: Login (with reset password), Register (student domain only), Verify email (resend, "I've verified", logout).
+- [x] **First verified sign-in**: create `users/{uid}` if missing (W1); block until it exists.
+- [x] **AuthGate**: routes by state and role; student cannot reach staff screens.
+- [x] **Shell**: bottom nav (Home, My reports or Needs action, Profile) with empty tabs.
 
 **Done when:** a student registers, verifies, and logs in; staff logs in; logout works.
 
