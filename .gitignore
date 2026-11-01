@@ -2,3 +2,11 @@
 .agents
 .claude
 skills-lock.json
+.env
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins-dependencies
+.packages
+build/
+*.iml

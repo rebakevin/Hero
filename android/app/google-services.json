@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "312945959436",
+    "project_id": "hero-e61aa",
+    "storage_bucket": "hero-e61aa.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:312945959436:android:b22262811bd8be1ecb8429",
+        "android_client_info": {
+          "package_name": "com.alu.hero"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCBfxCFZ72Z-FrDLXYFS3DTzZ2eRQgOIVA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
