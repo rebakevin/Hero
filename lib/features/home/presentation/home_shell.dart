@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../auth/auth.dart';
 import '../../profile/profile.dart';
+import '../../reports/reports.dart';
 
-/// Role-based bottom navigation. Tabs other than Profile are placeholders until
-/// the reports and notifications features land.
+/// Role-based bottom navigation. Needs action and Alerts are placeholders until
+/// the staff workflow and notifications land.
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key, required this.user});
 
@@ -20,23 +21,15 @@ class _HomeShellState extends State<HomeShell> {
 
   late final List<_Tab> _tabs = switch (widget.user.role) {
     Role.student => [
-      const _Tab(
+      _Tab(
         'Home',
         Icons.home_rounded,
-        EmptyState(
-          icon: Icons.inbox_rounded,
-          title: 'No reports yet',
-          message: 'Campus reports will appear here.',
-        ),
+        ReportsTab(user: widget.user, scope: ReportListScope.everyone),
       ),
-      const _Tab(
+      _Tab(
         'My reports',
         Icons.assignment_rounded,
-        EmptyState(
-          icon: Icons.assignment_rounded,
-          title: 'You have not reported anything',
-          message: 'Your reports will appear here.',
-        ),
+        ReportsTab(user: widget.user, scope: ReportListScope.mine),
       ),
       const _Tab(
         'Alerts',
@@ -59,14 +52,10 @@ class _HomeShellState extends State<HomeShell> {
           message: 'New and in-progress reports will appear here.',
         ),
       ),
-      const _Tab(
+      _Tab(
         'All reports',
         Icons.assignment_rounded,
-        EmptyState(
-          icon: Icons.assignment_rounded,
-          title: 'No reports yet',
-          message: 'Campus reports will appear here.',
-        ),
+        ReportsTab(user: widget.user, scope: ReportListScope.everyone),
       ),
       _Tab('Profile', Icons.person_rounded, ProfileScreen(user: widget.user)),
     ],

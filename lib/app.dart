@@ -4,16 +4,23 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/auth.dart';
 import 'features/home/home.dart';
+import 'features/reports/reports.dart';
 
 class HeroApp extends StatelessWidget {
   const HeroApp({
     super.key,
     required this.authRepository,
     required this.userRepository,
+    required this.reportRepository,
+    required this.photoUrls,
+    required this.photoPicker,
   });
 
   final AuthRepository authRepository;
   final UserRepository userRepository;
+  final ReportRepository reportRepository;
+  final PhotoUrlResolver photoUrls;
+  final PhotoPicker photoPicker;
 
   @override
   Widget build(BuildContext context) {
@@ -21,6 +28,9 @@ class HeroApp extends StatelessWidget {
       providers: [
         RepositoryProvider.value(value: authRepository),
         RepositoryProvider.value(value: userRepository),
+        RepositoryProvider.value(value: reportRepository),
+        RepositoryProvider.value(value: photoUrls),
+        RepositoryProvider.value(value: photoPicker),
       ],
       child: BlocProvider(
         create: (context) => AuthCubit(
