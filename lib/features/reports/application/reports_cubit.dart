@@ -43,6 +43,10 @@ class ReportsCubit extends Cubit<ReportsState> {
   void loadMore() {
     final current = state;
     if (current is! ReportsLoaded || !current.hasMore) return;
+    _loadNextPage();
+  }
+
+  void _loadNextPage() {
     _limit += pageSize;
     _subscribe();
   }
@@ -59,7 +63,7 @@ class ReportsCubit extends Cubit<ReportsState> {
     final refined = _query.refine(reports);
     if (refined.isEmpty && hasMore) {
       // The client-side filter dropped everything loaded so far; look further.
-      loadMore();
+      _loadNextPage();
       return;
     }
     emit(

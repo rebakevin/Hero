@@ -2,8 +2,10 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hero/features/reports/application/reports_cubit.dart';
 import 'package:hero/features/reports/application/reports_state.dart';
+import 'package:hero/features/reports/domain/created_range.dart';
 import 'package:hero/features/reports/domain/report_failure.dart';
 import 'package:hero/features/reports/domain/report_query.dart';
+import 'package:hero/features/reports/domain/report_sort.dart';
 import 'package:hero/features/reports/domain/report_status.dart';
 
 import '../fakes.dart';
@@ -80,6 +82,35 @@ void main() {
     ],
     verify: (_) =>
         expect(repository.queries.last.status, ReportStatus.resolved),
+  );
+
+  test(
+    'keeps looking when the client-side filter drops a whole page',
+    () async {
+      final range = CreatedRange(
+        first: DateTime(2026, 11, 1),
+        last: DateTime(2026, 11, 1),
+      );
+      final cubit = build(
+        ReportQuery(createdRange: range, sort: ReportSort.mostVotes),
+      );
+      repository.latestFeed.add([
+        for (var i = 0; i < ReportsCubit.pageSize; i++)
+          aReport(id: 'old$i', createdAt: DateTime(2026, 10, 1)),
+      ]);
+      await Future<void>.delayed(Duration.zero);
+      expect(repository.limits, [
+        ReportsCubit.pageSize,
+        ReportsCubit.pageSize * 2,
+      ]);
+      expect(cubit.state, isA<ReportsLoading>());
+
+      repository.latestFeed.add([
+        aReport(id: 'new', createdAt: DateTime(2026, 11, 1, 8)),
+      ]);
+      await Future<void>.delayed(Duration.zero);
+      expect((cubit.state as ReportsLoaded).reports.single.id, 'new');
+    },
   );
 
   test('close cancels the repository subscription', () async {
