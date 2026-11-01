@@ -93,11 +93,11 @@ Goal: everything that makes it more than a form.
 
 Goal: harden, verify, and package.
 
-- [ ] **UI pass**: match the prototype, consistent loading/empty/error states, disable submit buttons while busy.
-- [ ] **Validation pass**: every rule from Specs section 9 on every form.
-- [ ] **Unit and widget tests**: validators, `canEdit`, report form (errors on empty, enabled when valid).
-- [ ] **Rules Playground**: run the 23 cases from Database Design section 8.
-- [ ] **Manual checklist**: Specs section 9 list, on the Pixel 8 emulator.
-- [ ] **Deliverables**: screenshots, 7 to 10 minute demo video, technical report PDF (diagrams, rules, Cubit flow, and a short section justifying Supabase over Firebase Storage), push to GitHub.
+- [ ] **UI pass** (code reviewed for states and disabled-while-busy, not yet checked by eye against the prototype): match the prototype, consistent loading/empty/error states, disable submit buttons while busy.
+- [x] **Validation pass**: every rule from Specs section 9 on every form (table in Technical Documentation, section 13).
+- [x] **Unit and widget tests**: validators, `canEdit`, report form (errors on empty, enabled when valid).
+- [x] **Rules Playground**: run the 23 cases from Database Design section 8. Cases 1 to 21 are automated in `scripts/rules-tests/` (`npm test`); 22 and 23 were Storage rules and do not apply.
+- [ ] **Manual checklist**: Specs section 9 list, on the Pixel 8 emulator. Written up in `docs/Hero Test Checklist.md`; run it and tick the boxes.
+- [ ] **Deliverables**: screenshots, 7 to 10 minute demo video, technical report PDF (diagrams, rules, Cubit flow, and a short section justifying Supabase over Firebase Storage), push to GitHub. The technical documentation is written (`docs/Hero Technical Documentation.md`, plus ADRs in `docs/adr/`); export it to PDF with references dated. Screenshots, the video and the push are yours.
 
 **Done when:** the submission checklist in Specs section 10 is fully ticked.
