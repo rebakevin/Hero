@@ -1,5 +1,3 @@
-enum Role { student, staff }
-
 enum Category {
   facilities('Facilities'),
   water('Water shortage'),
