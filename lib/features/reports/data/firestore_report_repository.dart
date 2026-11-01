@@ -4,6 +4,8 @@ import 'dart:developer';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:hero/features/auth/auth.dart';
 
+import '../domain/building.dart';
+import '../domain/category.dart';
 import '../domain/created_range.dart';
 import '../domain/history_entry.dart';
 import '../domain/photo_paths.dart';
@@ -14,14 +16,19 @@ import '../domain/report_draft.dart';
 import '../domain/report_failure.dart';
 import '../domain/report_query.dart';
 import '../domain/report_repository.dart';
+import '../domain/report_status.dart';
+import '../domain/status_change.dart';
+import 'firestore_failure.dart';
 import 'history_mapper.dart';
 import 'report_mapper.dart';
+import 'status_change_mapper.dart';
 
 class FirestoreReportRepository implements ReportRepository {
   FirestoreReportRepository({required this._firestore, required this._photos});
 
   /// Without a bound an offline commit would wait forever for the server.
   static const _timeout = Duration(seconds: 30);
+  static const _similarCandidates = 20;
 
   final FirebaseFirestore _firestore;
   final PhotoStorage _photos;
@@ -50,6 +57,111 @@ class FirestoreReportRepository implements ReportRepository {
       return data == null ? null : ReportMapper.fromMap(snapshot.id, data);
     }),
   );
+
+  @override
+  Stream<List<HistoryEntry>> watchHistory(String reportId) => _translateErrors(
+    _reports
+        .doc(reportId)
+        .collection('history')
+        .orderBy('createdAt')
+        .snapshots()
+        .map(
+          (snapshot) => [
+            for (final doc in snapshot.docs)
+              HistoryMapper.fromMap(doc.id, doc.data()),
+          ],
+        ),
+  );
+
+  @override
+  Future<Map<ReportStatus, int>> countByStatus() async {
+    try {
+      final counts = await Future.wait([
+        for (final status in ReportStatus.values)
+          _reports.where('status', isEqualTo: status.key).count().get(),
+      ]).timeout(_timeout);
+      return {
+        for (var i = 0; i < counts.length; i++)
+          ReportStatus.values[i]: counts[i].count ?? 0,
+      };
+    } on TimeoutException {
+      throw const ReportException(ReportFailure.network);
+    } on FirebaseException catch (error) {
+      throw ReportException(FirestoreFailure.fromCode(error.code));
+    }
+  }
+
+  @override
+  Future<List<Report>> findOpenIn({
+    required Category category,
+    required Building building,
+  }) async {
+    try {
+      final snapshot = await _reports
+          .where('category', isEqualTo: category.key)
+          .where('building', isEqualTo: building.key)
+          .where(
+            'status',
+            whereIn: [ReportStatus.submitted.key, ReportStatus.inProgress.key],
+          )
+          .orderBy('createdAt', descending: true)
+          .limit(_similarCandidates)
+          .get()
+          .timeout(_timeout);
+      return [
+        for (final doc in snapshot.docs)
+          ReportMapper.fromMap(doc.id, doc.data()),
+      ];
+    } on TimeoutException {
+      throw const ReportException(ReportFailure.network);
+    } on FirebaseException catch (error) {
+      throw ReportException(FirestoreFailure.fromCode(error.code));
+    }
+  }
+
+  @override
+  Future<void> updateStatus({
+    required Report report,
+    required StatusChange change,
+    required AppUser staff,
+  }) async {
+    if (!report.canBeUpdatedBy(staff)) {
+      throw const ReportException(ReportFailure.changed);
+    }
+    final kind = change.kindFor(report);
+    if (kind == null || !change.isValidFor(report)) {
+      throw const ReportException(ReportFailure.invalidInput);
+    }
+    final reportRef = _reports.doc(report.id);
+    final historyRef = reportRef.collection('history').doc();
+    final notificationRef = _firestore
+        .collection('users')
+        .doc(report.reporterId)
+        .collection('notifications')
+        .doc();
+    final batch = _firestore.batch()
+      ..update(
+        reportRef,
+        StatusChangeMapper.reportUpdate(change, historyRef.id),
+      )
+      ..set(
+        historyRef,
+        StatusChangeMapper.historyEntry(
+          report: report,
+          change: change,
+          staff: staff,
+        ),
+      )
+      ..set(
+        notificationRef,
+        StatusChangeMapper.notification(
+          report: report,
+          change: change,
+          kind: kind,
+        ),
+      );
+    await _commit(batch);
+  }
 
   @override
   Future<void> createReport({
@@ -149,7 +261,7 @@ class FirestoreReportRepository implements ReportRepository {
     } on TimeoutException {
       throw const ReportException(ReportFailure.network);
     } on FirebaseException catch (error) {
-      throw ReportException(_failureFor(error.code));
+      throw ReportException(FirestoreFailure.fromCode(error.code));
     }
     batch.delete(reportRef);
     await _commit(batch);
@@ -161,8 +273,15 @@ class FirestoreReportRepository implements ReportRepository {
     if (query.reporterId != null) {
       result = result.where('reporterId', isEqualTo: query.reporterId);
     }
-    if (query.status != null) {
-      result = result.where('status', isEqualTo: query.status!.key);
+    final status = query.status;
+    final restricted = query.restrictToStatuses;
+    if (status != null) {
+      result = result.where('status', isEqualTo: status.key);
+    } else if (restricted != null) {
+      result = result.where(
+        'status',
+        whereIn: [for (final each in restricted) each.key],
+      );
     }
     if (query.category != null) {
       result = result.where('category', isEqualTo: query.category!.key);
@@ -237,7 +356,7 @@ class FirestoreReportRepository implements ReportRepository {
       throw const ReportException(ReportFailure.network);
     } on FirebaseException catch (error) {
       await _discardQuietly(discardOnFailure);
-      throw ReportException(_failureFor(error.code));
+      throw ReportException(FirestoreFailure.fromCode(error.code));
     }
   }
 
@@ -261,17 +380,10 @@ class FirestoreReportRepository implements ReportRepository {
     StreamTransformer.fromHandlers(
       handleError: (error, stackTrace, sink) => sink.addError(
         error is FirebaseException
-            ? ReportException(_failureFor(error.code))
+            ? ReportException(FirestoreFailure.fromCode(error.code))
             : error,
         stackTrace,
       ),
     ),
   );
-
-  ReportFailure _failureFor(String code) => switch (code) {
-    'permission-denied' => ReportFailure.changed,
-    'not-found' => ReportFailure.notFound,
-    'unavailable' || 'deadline-exceeded' => ReportFailure.network,
-    _ => ReportFailure.unknown,
-  };
 }
