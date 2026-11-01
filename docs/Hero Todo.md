@@ -60,14 +60,14 @@ Goal: register, verify, log in, and land on a role-based home.
 
 Goal: the student core loop, end to end, including photos.
 
-- [ ] **Models and repositories**: `Report`, `HistoryEntry`, `ReportRepository`, `StorageRepository` (Supabase upload, delete, URL).
-- [ ] **Report form**: category, title, description, building, room, photo picker (camera/gallery, max 5, compress to JPEG, under 5 MB), validation, upload progress, no-faces hint.
-- [ ] **Create (W2)**: upload photos, then one batch for report + `history/initial`; clean up uploads on failure.
-- [ ] **Feed**: live list, newest first, report cards, safety badge, loading/empty/error states.
-- [ ] **Search and filters**: title prefix, status, category, date range, sort by votes (respect the query limits in Database Design section 7).
-- [ ] **My reports** tab for students.
-- [ ] **Details screen**: info, photo gallery, reporter, times, owner Edit/Delete only while Submitted.
-- [ ] **Edit (W3) and Delete (W4)**: pre-filled form, confirmation dialog, batch delete of subdocs, remove photos from Supabase.
+- [x] **Models and repositories**: `Report`, `HistoryEntry`, `ReportRepository`, `StorageRepository` (Supabase upload, delete, URL).
+- [x] **Report form**: category, title, description, building, room, photo picker (camera/gallery, max 5, compress to JPEG, under 5 MB), validation, upload progress, no-faces hint.
+- [x] **Create (W2)**: upload photos, then one batch for report + `history/initial`; clean up uploads on failure.
+- [x] **Feed**: live list, newest first, report cards, safety badge, loading/empty/error states.
+- [x] **Search and filters**: title prefix, status, category, date range, sort by votes (respect the query limits in Database Design section 7).
+- [x] **My reports** tab for students.
+- [x] **Details screen**: info, photo gallery, reporter, times, owner Edit/Delete only while Submitted.
+- [x] **Edit (W3) and Delete (W4)**: pre-filled form, confirmation dialog, batch delete of subdocs, remove photos from Supabase.
 
 **Done when:** a student can create (with photos), find, edit and delete their own report.
 
