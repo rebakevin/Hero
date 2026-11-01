@@ -8,14 +8,18 @@ import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../../../shared/widgets/error_view.dart';
 import '../application/report_detail_cubit.dart';
+import '../application/report_history_cubit.dart';
 import '../application/report_detail_state.dart';
 import '../domain/report.dart';
 import '../domain/report_repository.dart';
 import 'report_dates.dart';
 import 'report_failure_message.dart';
 import 'report_form_screen.dart';
+import 'widgets/history_timeline.dart';
 import 'widgets/photo_gallery.dart';
 import 'widgets/report_chips.dart';
+import 'widgets/update_status_sheet.dart';
+import 'widgets/vote_section.dart';
 
 class ReportDetailScreen extends StatelessWidget {
   const ReportDetailScreen({
@@ -42,13 +46,23 @@ class ReportDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => ReportDetailCubit(
-        repository: context.read<ReportRepository>(),
-        user: user,
-        reportId: reportId,
-        initial: initial,
-      ),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => ReportDetailCubit(
+            repository: context.read<ReportRepository>(),
+            user: user,
+            reportId: reportId,
+            initial: initial,
+          ),
+        ),
+        BlocProvider(
+          create: (context) => ReportHistoryCubit(
+            repository: context.read<ReportRepository>(),
+            reportId: reportId,
+          ),
+        ),
+      ],
       child: _ReportDetailView(user: user),
     );
   }
@@ -201,6 +215,18 @@ class _ReportBody extends StatelessWidget {
           label: '"Me too"',
           value: '${report.upvoteCount}',
         ),
+        if (report.canBeVotedBy(user)) ...[
+          const SizedBox(height: AppSpacing.md),
+          VoteSection(report: report, user: user),
+        ],
+        if (report.canBeUpdatedBy(user)) ...[
+          const SizedBox(height: AppSpacing.md),
+          AppButton(
+            label: 'Update status',
+            onPressed: () =>
+                UpdateStatusSheet.show(context, report: report, staff: user),
+          ),
+        ],
         if (report.canBeEditedBy(user)) ...[
           const SizedBox(height: AppSpacing.xl),
           AppButton(
@@ -224,6 +250,10 @@ class _ReportBody extends StatelessWidget {
                 : const Text('Delete report'),
           ),
         ],
+        const SizedBox(height: AppSpacing.xl),
+        Text('History', style: textTheme.titleMedium),
+        const SizedBox(height: AppSpacing.md),
+        const HistoryTimeline(),
       ],
     );
   }

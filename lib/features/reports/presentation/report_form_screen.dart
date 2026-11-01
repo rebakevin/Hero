@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hero/features/auth/auth.dart';
@@ -10,6 +12,7 @@ import '../../../shared/widgets/app_text_field.dart';
 import '../../../shared/widgets/error_banner.dart';
 import '../application/report_form_cubit.dart';
 import '../application/report_form_state.dart';
+import '../application/similar_reports_cubit.dart';
 import '../domain/building.dart';
 import '../domain/category.dart';
 import '../domain/photo_picker.dart';
@@ -19,6 +22,7 @@ import '../domain/report_validators.dart';
 import 'report_detail_screen.dart';
 import 'report_failure_message.dart';
 import 'widgets/photo_picker_field.dart';
+import 'widgets/similar_reports_hint.dart';
 
 /// Create a report, or edit [editing] while it is still submitted.
 class ReportFormScreen extends StatelessWidget {
@@ -34,13 +38,21 @@ class ReportFormScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => ReportFormCubit(
-        repository: context.read<ReportRepository>(),
-        picker: context.read<PhotoPicker>(),
-        user: user,
-        editing: editing,
-      ),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) => ReportFormCubit(
+            repository: context.read<ReportRepository>(),
+            picker: context.read<PhotoPicker>(),
+            user: user,
+            editing: editing,
+          ),
+        ),
+        BlocProvider(
+          create: (context) =>
+              SimilarReportsCubit(context.read<ReportRepository>()),
+        ),
+      ],
       child: _ReportForm(user: user, editing: editing),
     );
   }
@@ -66,8 +78,26 @@ class _ReportFormState extends State<_ReportForm> {
   late Category? _category = widget.editing?.category;
   late Building? _building = widget.editing?.building;
 
+  static const _hintDelay = Duration(milliseconds: 400);
+  Timer? _hintDebounce;
+
+  /// New reports only: an edit is already filed, so there is nothing to duplicate.
+  void _refreshSimilarHint() {
+    if (widget.editing != null) return;
+    _hintDebounce?.cancel();
+    _hintDebounce = Timer(_hintDelay, () {
+      if (!mounted) return;
+      context.read<SimilarReportsCubit>().update(
+        title: _title.text,
+        category: _category,
+        building: _building,
+      );
+    });
+  }
+
   @override
   void dispose() {
+    _hintDebounce?.cancel();
     _title.dispose();
     _description.dispose();
     _room.dispose();
@@ -135,7 +165,10 @@ class _ReportFormState extends State<_ReportForm> {
                       value: _category,
                       enabled: enabled,
                       validator: ReportValidators.category,
-                      onChanged: (value) => setState(() => _category = value),
+                      onChanged: (value) {
+                        setState(() => _category = value);
+                        _refreshSimilarHint();
+                      },
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     AppTextField(
@@ -146,7 +179,9 @@ class _ReportFormState extends State<_ReportForm> {
                       validator: ReportValidators.title,
                       textCapitalization: TextCapitalization.sentences,
                       textInputAction: TextInputAction.next,
+                      onChanged: (_) => _refreshSimilarHint(),
                     ),
+                    if (!isEditing) SimilarReportsHint(user: widget.user),
                     const SizedBox(height: AppSpacing.lg),
                     AppTextField(
                       label: 'Description',
@@ -168,7 +203,10 @@ class _ReportFormState extends State<_ReportForm> {
                       value: _building,
                       enabled: enabled,
                       validator: ReportValidators.building,
-                      onChanged: (value) => setState(() => _building = value),
+                      onChanged: (value) {
+                        setState(() => _building = value);
+                        _refreshSimilarHint();
+                      },
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     AppTextField(

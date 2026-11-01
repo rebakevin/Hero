@@ -12,12 +12,14 @@ import '../application/reports_cubit.dart';
 import '../application/reports_state.dart';
 import '../domain/report_query.dart';
 import '../domain/report_repository.dart';
+import '../domain/report_status.dart';
 import 'report_detail_screen.dart';
 import 'report_failure_message.dart';
 import 'report_form_screen.dart';
 import 'report_list_scope.dart';
 import 'widgets/report_card.dart';
 import 'widgets/report_filter_sheet.dart';
+import 'widgets/status_counts_header.dart';
 
 /// A searchable, filterable, live list of reports, as a home tab.
 class ReportsTab extends StatelessWidget {
@@ -33,6 +35,9 @@ class ReportsTab extends StatelessWidget {
         repository: context.read<ReportRepository>(),
         query: ReportQuery(
           reporterId: scope == ReportListScope.mine ? user.uid : null,
+          restrictToStatuses: scope == ReportListScope.needsAction
+              ? const [ReportStatus.submitted, ReportStatus.inProgress]
+              : null,
         ),
       ),
       child: _ReportsView(user: user, scope: scope),
@@ -100,9 +105,11 @@ class _ReportsViewState extends State<_ReportsView> {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final title = widget.scope == ReportListScope.mine
-        ? 'My reports'
-        : 'Campus reports';
+    final title = switch (widget.scope) {
+      ReportListScope.mine => 'My reports',
+      ReportListScope.needsAction => 'Needs action',
+      ReportListScope.everyone => 'Campus reports',
+    };
     return Scaffold(
       backgroundColor: Colors.transparent,
       floatingActionButton: _canReport
@@ -126,6 +133,16 @@ class _ReportsViewState extends State<_ReportsView> {
             ),
             child: Text(title, style: textTheme.headlineLarge),
           ),
+          if (widget.user.isStaff)
+            const Padding(
+              padding: EdgeInsets.fromLTRB(
+                AppSpacing.screen,
+                0,
+                AppSpacing.screen,
+                AppSpacing.md,
+              ),
+              child: StatusCountsHeader(),
+            ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screen),
             child: Row(
@@ -229,6 +246,11 @@ class _EmptyReports extends StatelessWidget {
         icon: Icons.assignment_rounded,
         title: 'You have not reported anything',
         message: 'Tap Report on the Home tab to file your first one.',
+      ),
+      ReportListScope.needsAction => const EmptyState(
+        icon: Icons.task_alt_rounded,
+        title: 'Nothing needs action',
+        message: 'New and in-progress reports will appear here.',
       ),
       ReportListScope.everyone => const EmptyState(
         icon: Icons.inbox_rounded,

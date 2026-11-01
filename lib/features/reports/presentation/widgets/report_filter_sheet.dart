@@ -74,7 +74,7 @@ class _ReportFilterSheetState extends State<ReportFilterSheet> {
             _Section(
               title: 'Status',
               child: _ChoiceChips<ReportStatus>(
-                values: ReportStatus.values,
+                values: _query.statusChoices,
                 selected: _query.status,
                 label: (status) => status.label,
                 onSelected: (status) => setState(
@@ -146,6 +146,7 @@ class _ReportFilterSheetState extends State<ReportFilterSheet> {
               onPressed: () => Navigator.of(context).pop(
                 ReportQuery(
                   reporterId: _query.reporterId,
+                  restrictToStatuses: _query.restrictToStatuses,
                   titleSearch: _query.titleSearch,
                 ),
               ),

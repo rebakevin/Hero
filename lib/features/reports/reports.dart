@@ -1,10 +1,16 @@
 export 'data/device_photo_picker.dart';
 export 'data/firestore_report_repository.dart';
+export 'data/firestore_vote_repository.dart';
 export 'data/supabase_photo_storage.dart';
 export 'domain/photo_picker.dart';
 export 'domain/photo_storage.dart';
 export 'domain/photo_url_resolver.dart';
+export 'domain/priority.dart';
 export 'domain/report.dart';
 export 'domain/report_repository.dart';
+export 'domain/report_status.dart';
+export 'domain/vote_repository.dart';
+export 'presentation/report_dates.dart';
+export 'presentation/report_detail_screen.dart';
 export 'presentation/report_list_scope.dart';
 export 'presentation/reports_tab.dart';
