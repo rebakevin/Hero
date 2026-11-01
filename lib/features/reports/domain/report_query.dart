@@ -18,6 +18,7 @@ class ReportQuery extends Equatable {
     this.status,
     this.category,
     this.reporterId,
+    this.restrictToStatuses,
     this.createdRange,
     this.titleSearch = '',
     this.sort = ReportSort.newest,
@@ -26,11 +27,17 @@ class ReportQuery extends Equatable {
   final ReportStatus? status;
   final Category? category;
   final String? reporterId;
+
+  /// A fixed scope (staff "Needs action"); [status] can narrow it further.
+  final List<ReportStatus>? restrictToStatuses;
   final CreatedRange? createdRange;
   final String titleSearch;
   final ReportSort sort;
 
   String get titlePrefix => titleSearch.trim().toLowerCase();
+
+  List<ReportStatus> get statusChoices =>
+      restrictToStatuses ?? ReportStatus.values;
 
   bool get isSearching => titlePrefix.isNotEmpty;
 
@@ -59,6 +66,7 @@ class ReportQuery extends Equatable {
     status: status != null ? status() : this.status,
     category: category != null ? category() : this.category,
     reporterId: reporterId,
+    restrictToStatuses: restrictToStatuses,
     createdRange: createdRange != null ? createdRange() : this.createdRange,
     titleSearch: titleSearch ?? this.titleSearch,
     sort: sort ?? this.sort,
@@ -87,6 +95,7 @@ class ReportQuery extends Equatable {
     status,
     category,
     reporterId,
+    restrictToStatuses,
     createdRange,
     titleSearch,
     sort,

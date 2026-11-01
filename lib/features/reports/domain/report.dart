@@ -46,6 +46,11 @@ class Report extends Equatable {
 
   bool isOwnedBy(AppUser user) => reporterId == user.uid;
 
+  bool canBeUpdatedBy(AppUser user) => user.isStaff;
+
+  /// Students vote on other students' reports; staff and the reporter cannot.
+  bool canBeVotedBy(AppUser user) => !user.isStaff && !isOwnedBy(user);
+
   /// Owners may edit or delete only while staff have not touched the report.
   bool canBeEditedBy(AppUser user) =>
       isOwnedBy(user) && status == ReportStatus.submitted;

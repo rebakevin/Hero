@@ -33,6 +33,17 @@ abstract final class ReportValidators {
         : null;
   }
 
+  static String? statusNote(String? value) {
+    final note = value?.trim() ?? '';
+    if (note.isEmpty) return 'Explain the change.';
+    if (note.length < ReportLimits.minNoteLength ||
+        note.length > ReportLimits.maxNoteLength) {
+      return 'Use between ${ReportLimits.minNoteLength} and '
+          '${ReportLimits.maxNoteLength} characters.';
+    }
+    return null;
+  }
+
   static String? category(Category? value) =>
       value == null ? 'Choose a category.' : null;
 

@@ -5,6 +5,8 @@ abstract final class ReportLimits {
   static const minDescriptionLength = 10;
   static const maxDescriptionLength = 1000;
   static const maxRoomLength = 40;
+  static const minNoteLength = 3;
+  static const maxNoteLength = 300;
   static const maxPhotos = 5;
   static const maxPhotoBytes = 5 * 1024 * 1024;
 }
