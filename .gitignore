@@ -11,3 +11,4 @@ skills-lock.json
 build/
 *.iml
 CLAUDE.md
+docs/code-conventions/
