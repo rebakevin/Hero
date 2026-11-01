@@ -75,6 +75,17 @@ class FakeUserRepository implements UserRepository {
   Object? error;
   int loads = 0;
 
+  final renames = <String>[];
+
+  @override
+  Future<void> rename({
+    required String uid,
+    required String displayName,
+  }) async {
+    if (error != null) throw error!;
+    renames.add('$uid:$displayName');
+  }
+
   @override
   Future<AppUser> loadOrCreateStudent(AuthUser authUser) async {
     loads++;

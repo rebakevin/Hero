@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:hero/features/auth/auth.dart';
 import 'package:hero/features/reports/domain/building.dart';
 import 'package:hero/features/reports/domain/category.dart';
+import 'package:hero/features/reports/domain/history_entry.dart';
 import 'package:hero/features/reports/domain/photo_picker.dart';
 import 'package:hero/features/reports/domain/photo_source.dart';
 import 'package:hero/features/reports/domain/picked_photo.dart';
@@ -14,6 +15,8 @@ import 'package:hero/features/reports/domain/report_failure.dart';
 import 'package:hero/features/reports/domain/report_query.dart';
 import 'package:hero/features/reports/domain/report_repository.dart';
 import 'package:hero/features/reports/domain/report_status.dart';
+import 'package:hero/features/reports/domain/status_change.dart';
+import 'package:hero/features/reports/domain/vote_repository.dart';
 
 Report aReport({
   String id = 'report-1',
@@ -61,6 +64,14 @@ class FakeReportRepository implements ReportRepository {
   final created = <ReportDraft>[];
   final updated = <ReportDraft>[];
   final deleted = <String>[];
+  final history = StreamController<List<HistoryEntry>>.broadcast();
+  final statusChanges = <StatusChange>[];
+  Map<ReportStatus, int> counts = {for (final s in ReportStatus.values) s: 0};
+  Object? countError;
+  int countCalls = 0;
+  List<Report> openReports = [];
+  Object? findError;
+  final findCalls = <({Category category, Building building})>[];
   Object? writeError;
   Completer<void>? writeGate;
 
@@ -80,6 +91,36 @@ class FakeReportRepository implements ReportRepository {
 
   @override
   Stream<Report?> watchReport(String reportId) => detail.stream;
+
+  @override
+  Stream<List<HistoryEntry>> watchHistory(String reportId) => history.stream;
+
+  @override
+  Future<Map<ReportStatus, int>> countByStatus() async {
+    countCalls++;
+    if (countError != null) throw countError!;
+    return counts;
+  }
+
+  @override
+  Future<List<Report>> findOpenIn({
+    required Category category,
+    required Building building,
+  }) async {
+    findCalls.add((category: category, building: building));
+    if (findError != null) throw findError!;
+    return openReports;
+  }
+
+  @override
+  Future<void> updateStatus({
+    required Report report,
+    required StatusChange change,
+    required AppUser staff,
+  }) async {
+    statusChanges.add(change);
+    await _write();
+  }
 
   Future<void> _write() async {
     await writeGate?.future;
@@ -132,5 +173,32 @@ class FakePhotoPicker implements PhotoPicker {
     requestedLimits.add(limit);
     if (failWith != null) throw ReportException(failWith!);
     return next;
+  }
+}
+
+class FakeVoteRepository implements VoteRepository {
+  final votes = StreamController<bool>.broadcast();
+  final calls = <String>[];
+  Object? writeError;
+
+  @override
+  Stream<bool> watchHasVoted({
+    required String reportId,
+    required AppUser voter,
+  }) => votes.stream;
+
+  @override
+  Future<void> vote({required String reportId, required AppUser voter}) async {
+    calls.add('vote');
+    if (writeError != null) throw writeError!;
+  }
+
+  @override
+  Future<void> removeVote({
+    required String reportId,
+    required AppUser voter,
+  }) async {
+    calls.add('removeVote');
+    if (writeError != null) throw writeError!;
   }
 }

@@ -120,4 +120,18 @@ void main() {
     expect: () => [Authenticated(studentProfile), const Unauthenticated()],
     verify: (_) => expect(auth.calls, contains('signOut')),
   );
+
+  blocTest<AuthCubit, AuthState>(
+    'applyRename updates the signed-in profile name',
+    build: buildCubit,
+    act: (cubit) async {
+      auth.session.add(studentAuthUser);
+      await settle();
+      cubit.applyRename('Amina H.');
+    },
+    skip: 1,
+    expect: () => [
+      Authenticated(studentProfile.copyWith(displayName: 'Amina H.')),
+    ],
+  );
 }
