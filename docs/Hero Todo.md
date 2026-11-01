@@ -77,13 +77,13 @@ Goal: the student core loop, end to end, including photos.
 
 Goal: everything that makes it more than a form.
 
-- [ ] **Staff home**: status counts header (aggregate queries), "Needs action" tab.
-- [ ] **Update status sheet (W5)**: status, priority, required note; one batch with report update, history entry and notification.
-- [ ] **History timeline** on the details screen.
-- [ ] **Me too voting (W6)**: toggle with live count, blocked on own report.
-- [ ] **Similar-report hint** in the form while typing the title.
-- [ ] **Notifications**: bell with unread count, list screen, tap-through, mark read (W7).
-- [ ] **Profile**: name, email, role, rename for students (W8), logout.
+- [x] **Staff home**: status counts header (aggregate queries), "Needs action" tab.
+- [x] **Update status sheet (W5)**: status, priority, required note; one batch with report update, history entry and notification.
+- [x] **History timeline** on the details screen.
+- [x] **Me too voting (W6)**: toggle with live count, blocked on own report.
+- [x] **Similar-report hint** in the form while typing the title.
+- [x] **Notifications**: bell with unread count, list screen, tap-through, mark read (W7).
+- [x] **Profile**: name, email, role, rename for students (W8), logout.
 
 **Done when:** a staff status change appears live on the report, in the timeline, and as a student notification.
 
