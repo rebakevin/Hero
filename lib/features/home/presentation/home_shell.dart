@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
-import '../../../shared/widgets/empty_state.dart';
 import '../../auth/auth.dart';
+import '../../notifications/notifications.dart';
 import '../../profile/profile.dart';
 import '../../reports/reports.dart';
 
-/// Role-based bottom navigation. Needs action and Alerts are placeholders until
-/// the staff workflow and notifications land.
+/// Role-based bottom navigation. Students get Home, My reports, Alerts and
+/// Profile; staff get Needs action, All reports and Profile.
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key, required this.user});
 
@@ -19,66 +19,72 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   int _index = 0;
 
-  late final List<_Tab> _tabs = switch (widget.user.role) {
+  // Built on every build so a renamed user reaches the tabs; the tab widgets keep their state.
+  List<_Tab> _tabs(AppUser user) => switch (user.role) {
     Role.student => [
       _Tab(
         'Home',
-        Icons.home_rounded,
-        ReportsTab(user: widget.user, scope: ReportListScope.everyone),
+        const Icon(Icons.home_rounded),
+        ReportsTab(user: user, scope: ReportListScope.everyone),
       ),
       _Tab(
         'My reports',
-        Icons.assignment_rounded,
-        ReportsTab(user: widget.user, scope: ReportListScope.mine),
+        const Icon(Icons.assignment_rounded),
+        ReportsTab(user: user, scope: ReportListScope.mine),
       ),
-      const _Tab(
+      _Tab(
         'Alerts',
-        Icons.notifications_rounded,
-        EmptyState(
-          icon: Icons.notifications_rounded,
-          title: 'No alerts',
-          message: 'Updates on your reports will appear here.',
-        ),
+        const UnreadBadge(child: Icon(Icons.notifications_rounded)),
+        NotificationsTab(user: user),
       ),
-      _Tab('Profile', Icons.person_rounded, ProfileScreen(user: widget.user)),
+      _Tab(
+        'Profile',
+        const Icon(Icons.person_rounded),
+        ProfileScreen(user: user),
+      ),
     ],
     Role.staff => [
-      const _Tab(
+      _Tab(
         'Needs action',
-        Icons.pending_actions_rounded,
-        EmptyState(
-          icon: Icons.inbox_rounded,
-          title: 'Nothing needs action',
-          message: 'New and in-progress reports will appear here.',
-        ),
+        const Icon(Icons.pending_actions_rounded),
+        ReportsTab(user: user, scope: ReportListScope.needsAction),
       ),
       _Tab(
         'All reports',
-        Icons.assignment_rounded,
-        ReportsTab(user: widget.user, scope: ReportListScope.everyone),
+        const Icon(Icons.assignment_rounded),
+        ReportsTab(user: user, scope: ReportListScope.everyone),
       ),
-      _Tab('Profile', Icons.person_rounded, ProfileScreen(user: widget.user)),
+      _Tab(
+        'Profile',
+        const Icon(Icons.person_rounded),
+        ProfileScreen(user: user),
+      ),
     ],
   };
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    final tabs = _tabs(widget.user);
+    final shell = Scaffold(
       body: SafeArea(
         child: IndexedStack(
           index: _index,
-          children: [for (final tab in _tabs) tab.body],
+          children: [for (final tab in tabs) tab.body],
         ),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (index) => setState(() => _index = index),
         destinations: [
-          for (final tab in _tabs)
-            NavigationDestination(icon: Icon(tab.icon), label: tab.label),
+          for (final tab in tabs)
+            NavigationDestination(icon: tab.icon, label: tab.label),
         ],
       ),
     );
+    // Only students are notified; the scope also feeds the Alerts badge.
+    return widget.user.isStaff
+        ? shell
+        : NotificationsScope(user: widget.user, child: shell);
   }
 }
 
@@ -86,6 +92,6 @@ class _Tab {
   const _Tab(this.label, this.icon, this.body);
 
   final String label;
-  final IconData icon;
+  final Widget icon;
   final Widget body;
 }

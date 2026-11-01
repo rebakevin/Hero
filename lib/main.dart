@@ -9,6 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app.dart';
 import 'core/env.dart';
 import 'features/auth/auth.dart';
+import 'features/notifications/notifications.dart';
 import 'features/reports/reports.dart';
 import 'firebase_options.dart';
 
@@ -28,6 +29,10 @@ Future<void> main() async {
       reportRepository: FirestoreReportRepository(
         firestore: FirebaseFirestore.instance,
         photos: photoStorage,
+      ),
+      voteRepository: FirestoreVoteRepository(FirebaseFirestore.instance),
+      notificationRepository: FirestoreNotificationRepository(
+        FirebaseFirestore.instance,
       ),
       photoUrls: photoStorage,
       photoPicker: DevicePhotoPicker(ImagePicker()),

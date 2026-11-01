@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/auth.dart';
 import 'features/home/home.dart';
+import 'features/notifications/notifications.dart';
 import 'features/reports/reports.dart';
 
 class HeroApp extends StatelessWidget {
@@ -12,6 +13,8 @@ class HeroApp extends StatelessWidget {
     required this.authRepository,
     required this.userRepository,
     required this.reportRepository,
+    required this.voteRepository,
+    required this.notificationRepository,
     required this.photoUrls,
     required this.photoPicker,
   });
@@ -19,6 +22,8 @@ class HeroApp extends StatelessWidget {
   final AuthRepository authRepository;
   final UserRepository userRepository;
   final ReportRepository reportRepository;
+  final VoteRepository voteRepository;
+  final NotificationRepository notificationRepository;
   final PhotoUrlResolver photoUrls;
   final PhotoPicker photoPicker;
 
@@ -29,6 +34,8 @@ class HeroApp extends StatelessWidget {
         RepositoryProvider.value(value: authRepository),
         RepositoryProvider.value(value: userRepository),
         RepositoryProvider.value(value: reportRepository),
+        RepositoryProvider.value(value: voteRepository),
+        RepositoryProvider.value(value: notificationRepository),
         RepositoryProvider.value(value: photoUrls),
         RepositoryProvider.value(value: photoPicker),
       ],
