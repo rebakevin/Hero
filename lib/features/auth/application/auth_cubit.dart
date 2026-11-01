@@ -29,6 +29,14 @@ class AuthCubit extends Cubit<AuthState> {
 
   Future<void> signOut() => _auth.signOut();
 
+  /// Reflects a display name change already saved by the profile screen.
+  void applyRename(String displayName) {
+    final current = state;
+    if (current is Authenticated) {
+      emit(Authenticated(current.user.copyWith(displayName: displayName)));
+    }
+  }
+
   Future<void> retry() async {
     final user = _sessionUser;
     if (user != null && user.emailVerified) await _loadProfile(user);

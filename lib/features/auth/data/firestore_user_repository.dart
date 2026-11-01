@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../core/constants.dart';
@@ -10,6 +12,8 @@ import 'user_mapper.dart';
 
 class FirestoreUserRepository implements UserRepository {
   FirestoreUserRepository(this._firestore);
+
+  static const _timeout = Duration(seconds: 30);
 
   final FirebaseFirestore _firestore;
 
@@ -36,6 +40,24 @@ class FirestoreUserRepository implements UserRepository {
       });
       final created = await ref.get();
       return UserMapper.fromMap(ref.id, created.data()!);
+    } on FirebaseException catch (error) {
+      throw AuthException(_failureFor(error.code));
+    }
+  }
+
+  @override
+  Future<void> rename({
+    required String uid,
+    required String displayName,
+  }) async {
+    try {
+      await _firestore
+          .collection('users')
+          .doc(uid)
+          .update({'displayName': displayName})
+          .timeout(_timeout);
+    } on TimeoutException {
+      throw const AuthException(AuthFailure.network);
     } on FirebaseException catch (error) {
       throw AuthException(_failureFor(error.code));
     }

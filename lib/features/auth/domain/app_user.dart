@@ -18,6 +18,14 @@ class AppUser extends Equatable {
   final Role role;
   final DateTime createdAt;
 
+  AppUser copyWith({String? displayName}) => AppUser(
+    uid: uid,
+    displayName: displayName ?? this.displayName,
+    email: email,
+    role: role,
+    createdAt: createdAt,
+  );
+
   bool get isStaff => role == Role.staff;
 
   @override
