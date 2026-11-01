@@ -7,15 +7,15 @@ Where it differs from the Specs, section 17 lists the deviation and the reason.
 
 Source of truth for each topic:
 
-| Topic                   | Where                                                                |
-|-------------------------|----------------------------------------------------------------------|
-| Features and flows      | `docs/Hero Specs.md` sections 3 to 5                                 |
-| Collections, fields     | `docs/Hero Database Design.md` sections 2 to 4                       |
-| Write batches W1 to W8  | `docs/Hero Database Design.md` section 6, mapped to code in section 8 |
-| Security rules          | `firestore.rules`, summarised in section 10                          |
-| Code structure rules    | `docs/code-conventions/`, summarised in sections 4 and 5             |
-| Manual test checklist   | `docs/Hero Test Checklist.md`                                        |
-| Decisions               | `docs/adr/`                                                          |
+| Topic                  | Where                                                                 |
+|------------------------|-----------------------------------------------------------------------|
+| Features and flows     | `docs/Hero Specs.md` sections 3 to 5                                  |
+| Collections, fields    | `docs/Hero Database Design.md` sections 2 to 4                        |
+| Write batches W1 to W8 | `docs/Hero Database Design.md` section 6, mapped to code in section 8 |
+| Security rules         | `firestore.rules`, summarised in section 10                           |
+| Code structure rules   | `docs/code-conventions/`, summarised in sections 4 and 5              |
+| Manual test checklist  | `docs/Hero Test Checklist.md`                                         |
+| Decisions              | `docs/adr/`                                                           |
 
 ---
 
@@ -29,18 +29,18 @@ Submitted ⇄ In Progress ⇄ Resolved        (staff move a report in any direct
      └────────── Rejected ──────────┘
 ```
 
-| Capability                                   | Student                  | Staff                       |
-|----------------------------------------------|--------------------------|-----------------------------|
-| Register, verify email, log in, reset        | Yes (`@alustudent.com`)  | Log in only (`@alueducation.com`) |
-| File a report with up to 5 photos            | Yes                      | No                          |
-| Browse, search, filter, sort all reports     | Yes                      | Yes                         |
-| Edit or delete own report                    | Only while Submitted     | No                          |
-| "Me too" vote on someone else's report       | Yes                      | No                          |
-| Change status and priority, with a note      | No                       | Yes                         |
-| See the status history of a report           | Yes                      | Yes                         |
-| In-app notifications on status changes       | Yes                      | No                          |
-| Status counts and "Needs action" list        | No                       | Yes                         |
-| Change own display name                      | Yes                      | No                          |
+| Capability                               | Student                 | Staff                             |
+|------------------------------------------|-------------------------|-----------------------------------|
+| Register, verify email, log in, reset    | Yes (`@alustudent.com`) | Log in only (`@alueducation.com`) |
+| File a report with up to 5 photos        | Yes                     | No                                |
+| Browse, search, filter, sort all reports | Yes                     | Yes                               |
+| Edit or delete own report                | Only while Submitted    | No                                |
+| "Me too" vote on someone else's report   | Yes                     | No                                |
+| Change status and priority, with a note  | No                      | Yes                               |
+| See the status history of a report       | Yes                     | Yes                               |
+| In-app notifications on status changes   | Yes                     | No                                |
+| Status counts and "Needs action" list    | No                      | Yes                               |
+| Change own display name                  | Yes                     | No                                |
 
 Everything is enforced twice: the UI hides what a role may not do, and the Firestore rules refuse
 it (section 10). The rules are the real gate.
@@ -56,42 +56,42 @@ flowchart LR
         DATA["Data<br/>repositories, mappers, adapters"]
         UI --> CUBIT --> DOMAIN
         DATA --> DOMAIN
-        CUBIT -. "contracts only" .-> DATA
+        CUBIT -. " contracts only " .-> DATA
     end
-    DATA -->|"email + password"| AUTH["Firebase Authentication"]
-    DATA -->|"documents, batches, streams"| FS[("Cloud Firestore<br/>+ security rules")]
-    DATA -->|"JPEG upload / delete / public URL"| SB[("Supabase Storage<br/>bucket report-photos")]
-    FS -. "rules read users/{uid}.role" .-> FS
-    AUTH -. "email_verified, email in ID token" .-> FS
+    DATA -->|" email + password "| AUTH["Firebase Authentication"]
+    DATA -->|" documents, batches, streams "| FS[("Cloud Firestore<br/>+ security rules")]
+    DATA -->|" JPEG upload / delete / public URL "| SB[("Supabase Storage<br/>bucket report-photos")]
+    FS -. " rules read users/{uid}.role " .-> FS
+    AUTH -. " email_verified, email in ID token " .-> FS
 ```
 
 Two backends, split on purpose:
 
-| Backend          | Used for                                          | Why                                                    |
-|------------------|---------------------------------------------------|--------------------------------------------------------|
-| Firebase Auth    | Identity, email verification, password reset      | Assignment requirement                                 |
-| Cloud Firestore  | Users, reports, history, votes, notifications     | Assignment requirement; live streams; rules as the gate |
-| Supabase Storage | Report photos only                                | Firebase Storage needs the paid plan (ADR 0001)        |
+| Backend          | Used for                                      | Why                                                     |
+|------------------|-----------------------------------------------|---------------------------------------------------------|
+| Firebase Auth    | Identity, email verification, password reset  | Assignment requirement                                  |
+| Cloud Firestore  | Users, reports, history, votes, notifications | Assignment requirement; live streams; rules as the gate |
+| Supabase Storage | Report photos only                            | Firebase Storage needs the paid plan (ADR 0001)         |
 
 There are no Cloud Functions. Counters, history and notifications are kept consistent by batched
 writes that the security rules validate with `getAfter()` and `existsAfter()` (ADR 0003).
 
 ## 3. Technology stack
 
-| Concern           | Choice                                        | Notes                                                       |
-|-------------------|-----------------------------------------------|-------------------------------------------------------------|
-| Framework         | Flutter 3 / Dart 3 (`sdk: ^3.13.3`), Android  | Material 3, Pixel 8 emulator                                |
-| State management  | `flutter_bloc` 9 (Cubit), `equatable`         | One Cubit per screen or feature, sealed states (ADR 0002)   |
-| Identity          | `firebase_auth` 7                             | Email and password only                                     |
-| Database          | `cloud_firestore` 7                           | Native mode, `(default)` database                           |
-| Photo storage     | `supabase_flutter` 2                          | Anon key, policies limited to the `reportPhotos/` prefix    |
-| Photo capture     | `image_picker`, `flutter_image_compress`      | Camera and gallery, re-encoded as JPEG                      |
-| Formatting, fonts | `intl`, `google_fonts` (DM Sans)              | Relative and absolute dates                                 |
-| Configuration     | `flutter_dotenv`                              | `.env` bundled as an asset, read through `lib/core/env.dart` |
-| Tests             | `flutter_test`, `bloc_test`                   | Hand-written fakes instead of mocks                         |
-| Rules tests      | `@firebase/rules-unit-testing`, Firestore emulator | `scripts/rules-tests/`                                  |
-| Navigation        | Plain `Navigator.push` behind an auth gate    | No router package                                           |
-| Models            | Hand-written, `fromMap` / `toMap`             | No code generation                                          |
+| Concern           | Choice                                             | Notes                                                        |
+|-------------------|----------------------------------------------------|--------------------------------------------------------------|
+| Framework         | Flutter 3 / Dart 3 (`sdk: ^3.13.3`), Android       | Material 3, Pixel 8 emulator                                 |
+| State management  | `flutter_bloc` 9 (Cubit), `equatable`              | One Cubit per screen or feature, sealed states (ADR 0002)    |
+| Identity          | `firebase_auth` 7                                  | Email and password only                                      |
+| Database          | `cloud_firestore` 7                                | Native mode, `(default)` database                            |
+| Photo storage     | `supabase_flutter` 2                               | Anon key, policies limited to the `reportPhotos/` prefix     |
+| Photo capture     | `image_picker`, `flutter_image_compress`           | Camera and gallery, re-encoded as JPEG                       |
+| Formatting, fonts | `intl`, `google_fonts` (DM Sans)                   | Relative and absolute dates                                  |
+| Configuration     | `flutter_dotenv`                                   | `.env` bundled as an asset, read through `lib/core/env.dart` |
+| Tests             | `flutter_test`, `bloc_test`                        | Hand-written fakes instead of mocks                          |
+| Rules tests       | `@firebase/rules-unit-testing`, Firestore emulator | `scripts/rules-tests/`                                       |
+| Navigation        | Plain `Navigator.push` behind an auth gate         | No router package                                            |
+| Models            | Hand-written, `fromMap` / `toMap`                  | No code generation                                           |
 
 ## 4. Project structure
 
@@ -127,12 +127,12 @@ firestore.indexes.json           The 23 composite indexes
 
 Dependencies point inward: `presentation → application → domain`, and `data → domain`.
 
-| Layer          | Contains                                                         | May import                    |
-|----------------|------------------------------------------------------------------|-------------------------------|
-| `domain`       | Entities, enums, validators, business rules, repository contracts | Dart core only                |
-| `application`  | Cubits and their states                                          | `domain`                      |
-| `data`         | Repository implementations, mappers, SDK adapters                | `domain`, Firebase, Supabase  |
-| `presentation` | Screens and widgets                                              | `application`, `domain`, `shared` |
+| Layer          | Contains                                                          | May import                        |
+|----------------|-------------------------------------------------------------------|-----------------------------------|
+| `domain`       | Entities, enums, validators, business rules, repository contracts | Dart core only                    |
+| `application`  | Cubits and their states                                           | `domain`                          |
+| `data`         | Repository implementations, mappers, SDK adapters                 | `domain`, Firebase, Supabase      |
+| `presentation` | Screens and widgets                                               | `application`, `domain`, `shared` |
 
 Rules that keep this honest, all checked by `test/architecture_test.dart`:
 
@@ -163,7 +163,8 @@ Two small contracts exist because of these rules:
 
 - `PhotoUrlResolver` is a read-only lookup (`urlFor(path)`). Widgets use it to display photos
   without importing a repository. `PhotoStorage` extends it.
-- Domain types never carry Firestore types. `Timestamp` and `FieldValue` stop in `data/*_mapper.dart`.
+- Domain types never carry Firestore types. `Timestamp` and `FieldValue` stop in
+  `data/*_mapper.dart`.
 
 ## 6. State management
 
@@ -183,20 +184,20 @@ Two small contracts exist because of these rules:
 
 ### 6.2 Cubit inventory
 
-| Cubit                | Feature       | Scope (where it is created)         | State                                              | Source                          |
-|----------------------|---------------|-------------------------------------|----------------------------------------------------|---------------------------------|
-| `AuthCubit`          | auth          | App root                            | Checking, Unauthenticated, EmailUnverified, Authenticated, AuthProfileFailed | Auth session stream + `users/{uid}` |
-| `AuthFormCubit`      | auth          | Each auth screen                    | Idle, Submitting, Failed, Succeeded                | One-off auth calls              |
-| `ReportsCubit`       | reports       | Each list tab (one per tab)         | Loading, Loaded, Empty, Failure                    | `watchReports(query, limit)`    |
-| `ReportDetailCubit`  | reports       | Details screen                      | Loading, Loaded, Deleting, DeleteFailed, Deleted, Missing, Failure | `watchReport(id)` |
-| `ReportHistoryCubit` | reports       | Details screen                      | Loading, Loaded, Failure                           | `watchHistory(id)`              |
-| `VoteCubit`          | reports       | Vote button (eligible students)     | `VoteState` with `VoteStatus` enum                 | `watchHasVoted` + vote writes   |
-| `StatusUpdateCubit`  | reports       | Update status sheet (staff)         | `StatusUpdateState` with enum                      | `updateStatus` (W5)             |
-| `StatusCountsCubit`  | reports       | Staff header                        | Loading, Loaded, Failure                           | `countByStatus()` aggregate     |
-| `ReportFormCubit`    | reports       | Report form (create and edit)       | `ReportFormState` with `ReportFormStatus` enum     | Photo picker + create / update  |
-| `SimilarReportsCubit`| reports       | Report form (create only)           | Matching open reports                              | `findOpenIn(category, building)` |
-| `NotificationsCubit` | notifications | Student shell                       | Loading, Loaded, Empty, Failed                     | `watchLatest(uid, 50)`          |
-| `ProfileCubit`       | profile       | Profile screen                      | Idle, Saving, Renamed, Failed                      | `rename` (W8)                   |
+| Cubit                 | Feature       | Scope (where it is created)     | State                                                                        | Source                              |
+|-----------------------|---------------|---------------------------------|------------------------------------------------------------------------------|-------------------------------------|
+| `AuthCubit`           | auth          | App root                        | Checking, Unauthenticated, EmailUnverified, Authenticated, AuthProfileFailed | Auth session stream + `users/{uid}` |
+| `AuthFormCubit`       | auth          | Each auth screen                | Idle, Submitting, Failed, Succeeded                                          | One-off auth calls                  |
+| `ReportsCubit`        | reports       | Each list tab (one per tab)     | Loading, Loaded, Empty, Failure                                              | `watchReports(query, limit)`        |
+| `ReportDetailCubit`   | reports       | Details screen                  | Loading, Loaded, Deleting, DeleteFailed, Deleted, Missing, Failure           | `watchReport(id)`                   |
+| `ReportHistoryCubit`  | reports       | Details screen                  | Loading, Loaded, Failure                                                     | `watchHistory(id)`                  |
+| `VoteCubit`           | reports       | Vote button (eligible students) | `VoteState` with `VoteStatus` enum                                           | `watchHasVoted` + vote writes       |
+| `StatusUpdateCubit`   | reports       | Update status sheet (staff)     | `StatusUpdateState` with enum                                                | `updateStatus` (W5)                 |
+| `StatusCountsCubit`   | reports       | Staff header                    | Loading, Loaded, Failure                                                     | `countByStatus()` aggregate         |
+| `ReportFormCubit`     | reports       | Report form (create and edit)   | `ReportFormState` with `ReportFormStatus` enum                               | Photo picker + create / update      |
+| `SimilarReportsCubit` | reports       | Report form (create only)       | Matching open reports                                                        | `findOpenIn(category, building)`    |
+| `NotificationsCubit`  | notifications | Student shell                   | Loading, Loaded, Empty, Failed                                               | `watchLatest(uid, 50)`              |
+| `ProfileCubit`        | profile       | Profile screen                  | Idle, Saving, Renamed, Failed                                                | `rename` (W8)                       |
 
 ### 6.3 Flow: a student files a report (W2)
 
@@ -208,27 +209,26 @@ sequenceDiagram
     participant R as FirestoreReportRepository
     participant P as SupabasePhotoStorage
     participant DB as Firestore
-
-    S->>F: tap "Submit report"
-    F->>F: Form.validate() with ReportValidators
-    F->>C: submit(title, description, category, building, room)
-    C->>C: build ReportDraft, draft.isValid?
-    C-->>F: state submitting (button disabled)
-    C->>R: createReport(reportId, draft, reporter)
+    S ->> F: tap "Submit report"
+    F ->> F: Form.validate() with ReportValidators
+    F ->> C: submit(title, description, category, building, room)
+    C ->> C: build ReportDraft, draft.isValid?
+    C -->> F: state submitting (button disabled)
+    C ->> R: createReport(reportId, draft, reporter)
     loop each new photo
-        R->>P: upload(reportPhotos/{uid}/{reportId}/{randomId}.jpg)
-        R-->>C: onUploadProgress(i, n)
-        C-->>F: state submitting (uploaded i of n)
+        R ->> P: upload(reportPhotos/{uid}/{reportId}/{randomId}.jpg)
+        R -->> C: onUploadProgress(i, n)
+        C -->> F: state submitting (uploaded i of n)
     end
-    R->>DB: one batch: set reports/{id} + set history/initial
+    R ->> DB: one batch: set reports/{id} + set history/initial
     alt batch committed
-        R-->>C: returns
-        C-->>F: state succeeded
-        F->>F: BlocListener pushes the details screen
+        R -->> C: returns
+        C -->> F: state succeeded
+        F ->> F: BlocListener pushes the details screen
     else server refused the batch
-        R->>P: delete the files just uploaded
-        R-->>C: throws ReportException(failure)
-        C-->>F: state failed (input and photos kept)
+        R ->> P: delete the files just uploaded
+        R -->> C: throws ReportException(failure)
+        C -->> F: state failed (input and photos kept)
     end
 ```
 
@@ -251,15 +251,14 @@ sequenceDiagram
     participant R as FirestoreReportRepository
     participant DB as Firestore
     participant N as NotificationsCubit (student)
-
-    T->>S: pick status / priority, write note, tap Save
-    S->>C: submit(status, priority, note)
-    C->>C: StatusChange.isValidFor(report)? (a change, note 3 to 300)
-    C->>R: updateStatus(report, change, staff)
-    R->>DB: one batch: update report + set history/{id} + set users/{reporter}/notifications/{id}
-    DB-->>R: rules check getAfter / existsAfter, commit
-    R-->>C: returns, state succeeded, sheet closes
-    DB-->>N: live stream emits, Alerts badge +1
+    T ->> S: pick status / priority, write note, tap Save
+    S ->> C: submit(status, priority, note)
+    C ->> C: StatusChange.isValidFor(report)? (a change, note 3 to 300)
+    C ->> R: updateStatus(report, change, staff)
+    R ->> DB: one batch: update report + set history/{id} + set users/{reporter}/notifications/{id}
+    DB -->> R: rules check getAfter / existsAfter, commit
+    R -->> C: returns, state succeeded, sheet closes
+    DB -->> N: live stream emits, Alerts badge +1
     Note over DB: Details screen, history timeline and staff<br/>counts update from their own live streams
 ```
 
@@ -271,14 +270,14 @@ the meantime".
 
 The collections are defined in the Database Design. This table shows how each maps to code.
 
-| Firestore path                              | Domain type        | Mapper                              | Repository                    |
-|---------------------------------------------|--------------------|-------------------------------------|-------------------------------|
-| `users/{uid}`                               | `AppUser`          | `UserMapper`                        | `FirestoreUserRepository`     |
-| `reports/{reportId}`                        | `Report`           | `ReportMapper`                      | `FirestoreReportRepository`   |
-| `reports/{reportId}/history/{entryId}`      | `HistoryEntry`     | `HistoryMapper`, `StatusChangeMapper` | `FirestoreReportRepository` |
-| `reports/{reportId}/upvotes/{uid}`          | (existence = voted)| inline `createdAt` map              | `FirestoreVoteRepository`     |
-| `users/{uid}/notifications/{id}`            | `AppNotification`  | `NotificationMapper`, `StatusChangeMapper` | `FirestoreNotificationRepository` |
-| Supabase `reportPhotos/{uid}/{reportId}/{id}.jpg` | path `String` on `Report.photoPaths` | `PhotoPaths` | `SupabasePhotoStorage` |
+| Firestore path                                    | Domain type                          | Mapper                                     | Repository                        |
+|---------------------------------------------------|--------------------------------------|--------------------------------------------|-----------------------------------|
+| `users/{uid}`                                     | `AppUser`                            | `UserMapper`                               | `FirestoreUserRepository`         |
+| `reports/{reportId}`                              | `Report`                             | `ReportMapper`                             | `FirestoreReportRepository`       |
+| `reports/{reportId}/history/{entryId}`            | `HistoryEntry`                       | `HistoryMapper`, `StatusChangeMapper`      | `FirestoreReportRepository`       |
+| `reports/{reportId}/upvotes/{uid}`                | (existence = voted)                  | inline `createdAt` map                     | `FirestoreVoteRepository`         |
+| `users/{uid}/notifications/{id}`                  | `AppNotification`                    | `NotificationMapper`, `StatusChangeMapper` | `FirestoreNotificationRepository` |
+| Supabase `reportPhotos/{uid}/{reportId}/{id}.jpg` | path `String` on `Report.photoPaths` | `PhotoPaths`                               | `SupabasePhotoStorage`            |
 
 Mapping rules, all covered by `test/features/reports/data/`:
 
@@ -295,23 +294,23 @@ Mapping rules, all covered by `test/features/reports/data/`:
 
 ## 8. Write operations in code
 
-| #  | Operation                | Code                                                       | Documents in the batch                                        |
-|----|--------------------------|------------------------------------------------------------|---------------------------------------------------------------|
-| W1 | First verified sign-in   | `FirestoreUserRepository.loadOrCreateStudent`              | `users/{uid}` (transaction, so a duplicate session event is harmless) |
-| W2 | Create report            | `FirestoreReportRepository.createReport`                   | `reports/{id}`, `history/initial`                             |
-| W3 | Edit report              | `FirestoreReportRepository.updateReport`                   | `reports/{id}` (content fields and `updatedAt` only)          |
-| W4 | Delete report            | `FirestoreReportRepository.deleteReport`                   | report, all `history`, all `upvotes`, the owner's notifications for it |
-| W5 | Staff status / priority  | `FirestoreReportRepository.updateStatus`                   | `reports/{id}`, `history/{newId}`, `users/{reporter}/notifications/{newId}` |
-| W6 | Vote on / off            | `FirestoreVoteRepository.vote` / `removeVote`              | `upvotes/{uid}` and `reports/{id}.upvoteCount` via `FieldValue.increment(±1)` |
-| W7 | Mark notification read   | `FirestoreNotificationRepository.markRead`                 | `users/{uid}/notifications/{id}` (`read: true`)               |
-| W8 | Rename self              | `FirestoreUserRepository.rename`                           | `users/{uid}` (`displayName`)                                 |
+| #  | Operation               | Code                                          | Documents in the batch                                                        |
+|----|-------------------------|-----------------------------------------------|-------------------------------------------------------------------------------|
+| W1 | First verified sign-in  | `FirestoreUserRepository.loadOrCreateStudent` | `users/{uid}` (transaction, so a duplicate session event is harmless)         |
+| W2 | Create report           | `FirestoreReportRepository.createReport`      | `reports/{id}`, `history/initial`                                             |
+| W3 | Edit report             | `FirestoreReportRepository.updateReport`      | `reports/{id}` (content fields and `updatedAt` only)                          |
+| W4 | Delete report           | `FirestoreReportRepository.deleteReport`      | report, all `history`, all `upvotes`, the owner's notifications for it        |
+| W5 | Staff status / priority | `FirestoreReportRepository.updateStatus`      | `reports/{id}`, `history/{newId}`, `users/{reporter}/notifications/{newId}`   |
+| W6 | Vote on / off           | `FirestoreVoteRepository.vote` / `removeVote` | `upvotes/{uid}` and `reports/{id}.upvoteCount` via `FieldValue.increment(±1)` |
+| W7 | Mark notification read  | `FirestoreNotificationRepository.markRead`    | `users/{uid}/notifications/{id}` (`read: true`)                               |
+| W8 | Rename self             | `FirestoreUserRepository.rename`              | `users/{uid}` (`displayName`)                                                 |
 
 Ordering between Firestore and Supabase (the two systems cannot share a transaction):
 
-| Operation | Order                                                                                   |
-|-----------|-----------------------------------------------------------------------------------------|
-| W2        | Upload photos, then batch. Batch refused → delete the uploads.                          |
-| W3        | Upload new photos, then update. Update refused → delete the new uploads. Update done → delete the removed files. |
+| Operation | Order                                                                                                                                                |
+|-----------|------------------------------------------------------------------------------------------------------------------------------------------------------|
+| W2        | Upload photos, then batch. Batch refused → delete the uploads.                                                                                       |
+| W3        | Upload new photos, then update. Update refused → delete the new uploads. Update done → delete the removed files.                                     |
 | W4        | Batch first. Batch done → delete the photos. A photo that fails to delete is logged, never turned into an error for a delete that already succeeded. |
 
 Before any of these the repository checks the same rule the server will (for example
@@ -326,11 +325,11 @@ fixed scopes (`reporterId` for My reports, `restrictToStatuses` for Needs action
 Firestore cannot run every combination on the server. The domain decides what runs where, in one
 place (`ReportQuery.serverOrder` and `refine`):
 
-| Search term | Sort       | Server order    | Date range  | Sort               | Index family            |
-|-------------|------------|-----------------|-------------|--------------------|-------------------------|
-| none        | Newest     | `createdAt desc`| server      | server             | `…+createdAt`           |
-| none        | Most votes | `upvoteCount desc` | **client** | server             | `…+upvoteCount`         |
-| prefix      | either     | `titleLower`    | **client**  | **client**         | `…+titleLower`          |
+| Search term | Sort       | Server order       | Date range | Sort       | Index family    |
+|-------------|------------|--------------------|------------|------------|-----------------|
+| none        | Newest     | `createdAt desc`   | server     | server     | `…+createdAt`   |
+| none        | Most votes | `upvoteCount desc` | **client** | server     | `…+upvoteCount` |
+| prefix      | either     | `titleLower`       | **client** | **client** | `…+titleLower`  |
 
 - Equality filters (`status`, `category`, `reporterId`) always run on the server. "Needs action"
   uses `status in [submitted, inProgress]`, which reuses the `status` indexes.
@@ -352,12 +351,12 @@ index in the same change.
 
 ### 10.1 Layers of defence
 
-| Layer              | What it does                                                                 | Strength        |
-|--------------------|------------------------------------------------------------------------------|-----------------|
-| Form validators    | Immediate feedback on every field                                            | UX only         |
-| Domain guards      | `ReportDraft.isValid`, `StatusChange.isValidFor`, `canBeEditedBy`, ... run in the Cubit and again in the repository | App-side        |
-| Firestore rules    | Identity, role, exact key sets, types, lengths, enums, immutable fields, batch preconditions | **Enforced**    |
-| Supabase policies  | Anon insert / delete / select under the `reportPhotos/` prefix, JPEG, 5 MB   | Partial (10.4)  |
+| Layer             | What it does                                                                                                        | Strength       |
+|-------------------|---------------------------------------------------------------------------------------------------------------------|----------------|
+| Form validators   | Immediate feedback on every field                                                                                   | UX only        |
+| Domain guards     | `ReportDraft.isValid`, `StatusChange.isValidFor`, `canBeEditedBy`, ... run in the Cubit and again in the repository | App-side       |
+| Firestore rules   | Identity, role, exact key sets, types, lengths, enums, immutable fields, batch preconditions                        | **Enforced**   |
+| Supabase policies | Anon insert / delete / select under the `reportPhotos/` prefix, JPEG, 5 MB                                          | Partial (10.4) |
 
 ### 10.2 What the rules enforce
 
@@ -444,12 +443,12 @@ exception: `AuthException(AuthFailure)`, `ReportException(ReportFailure)` and
 `NotificationsException(NotificationsFailure)`. Screens turn a failure into a message through one
 extension per feature (`*_failure_message.dart`).
 
-| Firestore code                       | `ReportFailure` | What the user sees                                          |
-|--------------------------------------|-----------------|-------------------------------------------------------------|
-| `permission-denied`                  | `changed`       | "This report changed in the meantime. Go back and open it again." |
-| `not-found`                          | `notFound`      | "This report no longer exists."                             |
-| `unavailable`, `deadline-exceeded`, timeout | `network` | "No connection. Check your internet and try again." + Retry |
-| anything else                        | `unknown`       | "Something went wrong. Please try again."                   |
+| Firestore code                              | `ReportFailure` | What the user sees                                                |
+|---------------------------------------------|-----------------|-------------------------------------------------------------------|
+| `permission-denied`                         | `changed`       | "This report changed in the meantime. Go back and open it again." |
+| `not-found`                                 | `notFound`      | "This report no longer exists."                                   |
+| `unavailable`, `deadline-exceeded`, timeout | `network`       | "No connection. Check your internet and try again." + Retry       |
+| anything else                               | `unknown`       | "Something went wrong. Please try again."                         |
 
 A `permission-denied` is usually a lost race (status moved, report deleted, two clients voting),
 not a crash. Messages never include paths, ids or SDK text.
@@ -471,18 +470,18 @@ not a crash. Messages never include paths, ids or SDK text.
 Each rule exists as a pure function in a `domain` folder, is used by the form, is re-checked
 before the repository call, and is mirrored by the Firestore rules where the data is stored.
 
-| Field                | Rule                                                    | Validator                         | Rules mirror                       |
-|----------------------|---------------------------------------------------------|-----------------------------------|------------------------------------|
-| Email (register)     | Required, valid format, ends `@alustudent.com`          | `AuthValidators.registerEmail`    | Token email domain                 |
-| Email (log in)       | Valid format, student or staff domain                   | `AuthValidators.loginEmail`       | Token email domain                 |
-| Password             | 8+ characters, a letter and a number; confirm matches   | `AuthValidators.newPassword`, `confirmPassword` | (Firebase Auth only)  |
-| Display name         | 2 to 50 characters, trimmed                             | `AuthValidators.displayName`      | `validName`                        |
-| Title                | 5 to 80 characters, trimmed                             | `ReportValidators.title`          | `validReportContent`               |
-| Description          | 10 to 1000 characters, trimmed                          | `ReportValidators.description`    | `validReportContent`               |
-| Category, building   | Required selection                                      | `ReportValidators.category`, `building` | enum lists in the rules      |
-| Room                 | Optional, at most 40 characters                         | `ReportValidators.room`           | `validReportContent`               |
-| Photos               | At most 5, JPEG, at most 5 MB each                      | `ReportDraft.isValid`, `DevicePhotoPicker` | `photoPaths.size() <= 5`  |
-| Status note (staff)  | 3 to 300 characters; a status or priority must change   | `ReportValidators.statusNote`, `StatusChange.isValidFor` | `staffHistoryEntry` |
+| Field               | Rule                                                  | Validator                                                | Rules mirror             |
+|---------------------|-------------------------------------------------------|----------------------------------------------------------|--------------------------|
+| Email (register)    | Required, valid format, ends `@alustudent.com`        | `AuthValidators.registerEmail`                           | Token email domain       |
+| Email (log in)      | Valid format, student or staff domain                 | `AuthValidators.loginEmail`                              | Token email domain       |
+| Password            | 8+ characters, a letter and a number; confirm matches | `AuthValidators.newPassword`, `confirmPassword`          | (Firebase Auth only)     |
+| Display name        | 2 to 50 characters, trimmed                           | `AuthValidators.displayName`                             | `validName`              |
+| Title               | 5 to 80 characters, trimmed                           | `ReportValidators.title`                                 | `validReportContent`     |
+| Description         | 10 to 1000 characters, trimmed                        | `ReportValidators.description`                           | `validReportContent`     |
+| Category, building  | Required selection                                    | `ReportValidators.category`, `building`                  | enum lists in the rules  |
+| Room                | Optional, at most 40 characters                       | `ReportValidators.room`                                  | `validReportContent`     |
+| Photos              | At most 5, JPEG, at most 5 MB each                    | `ReportDraft.isValid`, `DevicePhotoPicker`               | `photoPaths.size() <= 5` |
+| Status note (staff) | 3 to 300 characters; a status or priority must change | `ReportValidators.statusNote`, `StatusChange.isValidFor` | `staffHistoryEntry`      |
 
 The limits are named constants in `ReportLimits` and `AuthValidators`, not literals in widgets. A
 failed submit keeps everything the user typed.
@@ -502,14 +501,14 @@ failed submit keeps everything the user typed.
 
 ## 15. Testing
 
-| Layer                 | What is covered                                                                  | Where                                   |
-|-----------------------|----------------------------------------------------------------------------------|-----------------------------------------|
-| Domain (pure Dart)    | Validators, `canBeEditedBy` / `canBeVotedBy` / `canBeUpdatedBy`, `ReportQuery` (server vs client split), `StatusChange`, `SimilarReports`, `ReportDraft` | `test/features/*/domain/` |
-| Mappers               | Exact key sets, explicit nulls, strict `fromMap`, unknown enum keys fail         | `test/features/reports/data/`           |
-| Cubits (`bloc_test`)  | Loading, loaded, empty, error, double submit ignored, subscriptions cancelled, race and failure paths | `test/features/*/application/`, `auth/`, `profile/`, `notifications/` |
-| Widgets               | Login and register errors; report form shows an error for every required field, rejects short text, submits a trimmed draft, keeps input on failure | `test/features/auth/`, `test/features/reports/presentation/` |
-| Architecture          | The four import rules from section 5                                             | `test/architecture_test.dart`           |
-| Security rules        | The Playground cases 1 to 21 plus the allowed paths, on the Firestore emulator   | `scripts/rules-tests/`                  |
+| Layer                | What is covered                                                                                                                                          | Where                                                                 |
+|----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------|
+| Domain (pure Dart)   | Validators, `canBeEditedBy` / `canBeVotedBy` / `canBeUpdatedBy`, `ReportQuery` (server vs client split), `StatusChange`, `SimilarReports`, `ReportDraft` | `test/features/*/domain/`                                             |
+| Mappers              | Exact key sets, explicit nulls, strict `fromMap`, unknown enum keys fail                                                                                 | `test/features/reports/data/`                                         |
+| Cubits (`bloc_test`) | Loading, loaded, empty, error, double submit ignored, subscriptions cancelled, race and failure paths                                                    | `test/features/*/application/`, `auth/`, `profile/`, `notifications/` |
+| Widgets              | Login and register errors; report form shows an error for every required field, rejects short text, submits a trimmed draft, keeps input on failure      | `test/features/auth/`, `test/features/reports/presentation/`          |
+| Architecture         | The four import rules from section 5                                                                                                                     | `test/architecture_test.dart`                                         |
+| Security rules       | The Playground cases 1 to 21 plus the allowed paths, on the Firestore emulator                                                                           | `scripts/rules-tests/`                                                |
 
 Result at the time of writing: **159 Flutter tests, all passing; `flutter analyze` reports no
 issues.** Rules suite: **44 tests, 42 passing, 2 skipped** (Playground cases 22 and 23 are Storage
@@ -549,11 +548,11 @@ firebase deploy --only firestore --project hero-e61aa     # rules and indexes
 node scripts/seed-staff.js staff@alueducation.com "Display Name"
 ```
 
-| Key               | Meaning                                              |
-|-------------------|------------------------------------------------------|
-| `SUPABASE_URL`    | Supabase project URL                                 |
-| `SUPABASE_KEY`    | Supabase publishable (anon) key                      |
-| `SUPABASE_BUCKET` | Bucket name, default `report-photos`                 |
+| Key               | Meaning                              |
+|-------------------|--------------------------------------|
+| `SUPABASE_URL`    | Supabase project URL                 |
+| `SUPABASE_KEY`    | Supabase publishable (anon) key      |
+| `SUPABASE_BUCKET` | Bucket name, default `report-photos` |
 
 The app fails at startup with a clear message when a required key is missing (`lib/core/env.dart`).
 
@@ -568,55 +567,55 @@ email verified and creates `users/{uid}` with `role: staff`), then the staff mem
 
 ## 17. Decisions and deviations from the Specs
 
-| Specs                                   | As built                                              | Reason                                                       |
-|-----------------------------------------|-------------------------------------------------------|--------------------------------------------------------------|
-| Photos in Firebase Storage              | Supabase Storage, paths in Firestore                  | Firebase Storage needs the paid plan (ADR 0001)              |
-| `photoUrls` on the report               | `photoPaths`                                          | URLs carry tokens and break if moved                         |
-| Folders `data/models`, `data/repositories`, one folder per screen group | Feature-first with four layers per feature | Code conventions win on structure                      |
-| Title search on loaded results          | Server-side prefix search on `titleLower`             | Works beyond the loaded page; needs the extra indexes        |
-| Bell icon with badge                    | Alerts tab with an unread badge                       | Fits the bottom bar; same information                        |
-| Notifications: unread query and count   | Newest 50 on one stream, unread counted on the device | One listener instead of two; badge caps at 50                |
-| Cubit per feature                       | Cubit per screen or feature scope (12)                | Each has its own lifecycle; no god Cubit                     |
-| Report form as a separate feature       | Inside `reports`                                      | Create and edit open the details screen and the reverse; one feature avoids a cycle |
-| Reporter counted in `upvoteCount`       | Count excludes the reporter                           | The Specs contradicted themselves (Database Design section 12) |
+| Specs                                                                   | As built                                              | Reason                                                                              |
+|-------------------------------------------------------------------------|-------------------------------------------------------|-------------------------------------------------------------------------------------|
+| Photos in Firebase Storage                                              | Supabase Storage, paths in Firestore                  | Firebase Storage needs the paid plan (ADR 0001)                                     |
+| `photoUrls` on the report                                               | `photoPaths`                                          | URLs carry tokens and break if moved                                                |
+| Folders `data/models`, `data/repositories`, one folder per screen group | Feature-first with four layers per feature            | Code conventions win on structure                                                   |
+| Title search on loaded results                                          | Server-side prefix search on `titleLower`             | Works beyond the loaded page; needs the extra indexes                               |
+| Bell icon with badge                                                    | Alerts tab with an unread badge                       | Fits the bottom bar; same information                                               |
+| Notifications: unread query and count                                   | Newest 50 on one stream, unread counted on the device | One listener instead of two; badge caps at 50                                       |
+| Cubit per feature                                                       | Cubit per screen or feature scope (12)                | Each has its own lifecycle; no god Cubit                                            |
+| Report form as a separate feature                                       | Inside `reports`                                      | Create and edit open the details screen and the reverse; one feature avoids a cycle |
+| Reporter counted in `upvoteCount`                                       | Count excludes the reporter                           | The Specs contradicted themselves (Database Design section 12)                      |
 
 Architecture decision records are in `docs/adr/`:
 
 | ADR  | Decision                                                  |
 |------|-----------------------------------------------------------|
-| 0001 | Supabase Storage for photos instead of Firebase Storage    |
+| 0001 | Supabase Storage for photos instead of Firebase Storage   |
 | 0002 | Cubit (`flutter_bloc`) for state management               |
-| 0003 | No Cloud Functions; batched writes validated by the rules  |
+| 0003 | No Cloud Functions; batched writes validated by the rules |
 
 ## 18. Known limitations
 
-| Limitation                                                                                                   | Consequence / mitigation                                                    |
-|--------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------|
+| Limitation                                                                                                                            | Consequence / mitigation                                                                                                         |
+|---------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------|
 | The rules cannot require the reporter's notification on a staff update (the report holds no pointer to it). Found by the rules tests. | The app always writes it, but a modified staff client could change a status silently. Fix would be a `lastNotificationId` field. |
-| Supabase cannot read Firestore, so "owner only, only while Submitted" for photos is enforced in the app.     | Files could be added to the bucket by a modified client, but not attached to another report. |
-| The rules cannot loop over `photoPaths`, and Storage cannot count files.                                     | The 5-photo cap is checked on the list size; orphans are possible.          |
-| A timed-out write may still land; uploaded photos are kept on timeout.                                       | Possible orphan files; retrying reuses the same report id.                  |
-| Delete is one batch (500 operations).                                                                        | A report with roughly 490+ votes would leave some vote documents behind.    |
-| Status counts are one-shot aggregates, refreshed whenever the list changes.                                  | A change made by another device shows after the next list update.           |
-| "Load more" raises the limit and re-reads earlier pages.                                                     | More reads than cursor paging; fine at campus scale and keeps the list live. |
-| The unread badge counts the newest 50 notifications.                                                         | Shows "50+" at the cap.                                                     |
-| `reporterName` is a snapshot; staff cannot change their own name in the app.                                 | Old reports keep the old name after a rename (by design).                   |
-| No offline-first sync, no push notifications, no App Check, Android only.                                    | Out of scope in the Specs; App Check is a configuration change.             |
+| Supabase cannot read Firestore, so "owner only, only while Submitted" for photos is enforced in the app.                              | Files could be added to the bucket by a modified client, but not attached to another report.                                     |
+| The rules cannot loop over `photoPaths`, and Storage cannot count files.                                                              | The 5-photo cap is checked on the list size; orphans are possible.                                                               |
+| A timed-out write may still land; uploaded photos are kept on timeout.                                                                | Possible orphan files; retrying reuses the same report id.                                                                       |
+| Delete is one batch (500 operations).                                                                                                 | A report with roughly 490+ votes would leave some vote documents behind.                                                         |
+| Status counts are one-shot aggregates, refreshed whenever the list changes.                                                           | A change made by another device shows after the next list update.                                                                |
+| "Load more" raises the limit and re-reads earlier pages.                                                                              | More reads than cursor paging; fine at campus scale and keeps the list live.                                                     |
+| The unread badge counts the newest 50 notifications.                                                                                  | Shows "50+" at the cap.                                                                                                          |
+| `reporterName` is a snapshot; staff cannot change their own name in the app.                                                          | Old reports keep the old name after a rename (by design).                                                                        |
+| No offline-first sync, no push notifications, no App Check, Android only.                                                             | Out of scope in the Specs; App Check is a configuration change.                                                                  |
 
 ## 19. Requirement coverage
 
-| Assignment requirement / rubric area | Where it is met                                                                           |
-|--------------------------------------|-------------------------------------------------------------------------------------------|
-| Roles: students submit, staff review | Sections 1, 10; role from `users/{uid}`; role-based shell; rules tests 3, 9, 13 to 16      |
-| Firebase Authentication              | Register, verify, log in, reset, session gate (10.3)                                      |
-| Cloud Firestore, CRUD                | Create, read (live), update, delete with history, votes, notifications (sections 7, 8)    |
-| Modern state management              | Cubit per scope with sealed states and a repository layer (section 6)                     |
-| Image storage                        | Supabase Storage in place of Firebase Storage (11, ADR 0001)                              |
-| Features                             | Photos, search, filters, details, status tracking, voting, similar hint, notifications    |
-| UI / UX                              | Loading, empty and error states everywhere; disabled while busy; accessible chips (14)    |
-| Code quality                         | Feature folders, shared widgets, import rules checked by a test, lints clean (4, 5)        |
-| Product thinking                     | Duplicate hint, "me too" voting, priority, reject, privacy hint on photos, audit trail    |
-| Technical explanation                | Sections 2, 6 (Cubit flow), 8 (batches), 10 (rules)                                       |
+| Assignment requirement / rubric area | Where it is met                                                                        |
+|--------------------------------------|----------------------------------------------------------------------------------------|
+| Roles: students submit, staff review | Sections 1, 10; role from `users/{uid}`; role-based shell; rules tests 3, 9, 13 to 16  |
+| Firebase Authentication              | Register, verify, log in, reset, session gate (10.3)                                   |
+| Cloud Firestore, CRUD                | Create, read (live), update, delete with history, votes, notifications (sections 7, 8) |
+| Modern state management              | Cubit per scope with sealed states and a repository layer (section 6)                  |
+| Image storage                        | Supabase Storage in place of Firebase Storage (11, ADR 0001)                           |
+| Features                             | Photos, search, filters, details, status tracking, voting, similar hint, notifications |
+| UI / UX                              | Loading, empty and error states everywhere; disabled while busy; accessible chips (14) |
+| Code quality                         | Feature folders, shared widgets, import rules checked by a test, lints clean (4, 5)    |
+| Product thinking                     | Duplicate hint, "me too" voting, priority, reject, privacy hint on photos, audit trail |
+| Technical explanation                | Sections 2, 6 (Cubit flow), 8 (batches), 10 (rules)                                    |
 
 ## 20. References
 
