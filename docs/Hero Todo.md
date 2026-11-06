@@ -106,6 +106,8 @@ Goal: everything that makes it more than a form.
 - [x] **Notifications**: bell with unread count, list screen, tap-through, mark read (W7).
 - [x] **Profile**: name, email, role, rename for students (W8), logout.
 - [x] **Switch account**: up to 5 accounts stay signed in on the device, one tap apart (ADR 0004).
+- [x] **Optional verification for students** (ADR 0005). Decide before submission whether to keep
+  it.
 
 **Done when:** a staff status change appears live on the report, in the timeline, and as a student
 notification.

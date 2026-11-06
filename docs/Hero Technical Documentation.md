@@ -298,7 +298,7 @@ Mapping rules, all covered by `test/features/reports/data/`:
 
 | #  | Operation               | Code                                          | Documents in the batch                                                        |
 |----|-------------------------|-----------------------------------------------|-------------------------------------------------------------------------------|
-| W1 | First verified sign-in  | `FirestoreUserRepository.loadOrCreateStudent` | `users/{uid}` (transaction, so a duplicate session event is harmless)         |
+| W1 | First sign-in  | `FirestoreUserRepository.loadOrCreateStudent` | `users/{uid}` (transaction, so a duplicate session event is harmless)         |
 | W2 | Create report           | `FirestoreReportRepository.createReport`      | `reports/{id}`, `history/initial`                                             |
 | W3 | Edit report             | `FirestoreReportRepository.updateReport`      | `reports/{id}` (content fields and `updatedAt` only)                          |
 | W4 | Delete report           | `FirestoreReportRepository.deleteReport`      | report, all `history`, all `upvotes`, the owner's notifications for it        |
@@ -364,7 +364,8 @@ index in the same change.
 
 Full text is `firestore.rules` (274 lines). In summary:
 
-- Every request needs a verified email on `@alustudent.com` or `@alueducation.com`. Students act
+- Every request needs an email on `@alustudent.com` or a verified one on `@alueducation.com`
+  (verification is optional for students, ADR 0005). Students act
   only with the student domain **and** `users/{uid}.role == 'student'`; staff likewise. The role
   comes only from the `users` document, never from the client or a custom claim.
 - Reports: exact 15 keys; `status = submitted`, `priority = null`, `upvoteCount = 0`,
@@ -385,10 +386,9 @@ Full text is `firestore.rules` (274 lines). In summary:
 stateDiagram-v2
     [*] --> Checking: app start
     Checking --> Unauthenticated: no session
-    Checking --> EmailUnverified: session, email not verified
-    Checking --> Authenticated: session verified, users/uid loaded
+    Checking --> EmailUnverified: session, unverified staff
+    Checking --> Authenticated: student or verified staff, users/uid loaded
     Checking --> AuthProfileFailed: users/uid missing or unreadable
-    Unauthenticated --> EmailUnverified: register
     Unauthenticated --> Checking: log in
     EmailUnverified --> Checking: "I've verified" (reload + token refresh)
     AuthProfileFailed --> Checking: retry
@@ -400,7 +400,7 @@ stateDiagram-v2
   are created in the Firebase Console and seeded with `scripts/seed-staff.js`.
 - After the user verifies their email the app force-refreshes the ID token, because the rules read
   `email_verified` from the token, which stays stale until refreshed.
-- `users/{uid}` is created on the first **verified** sign-in (W1). Until it exists, the app stays
+- `users/{uid}` is created on the first sign-in (W1). Until it exists, the app stays
   out of the home shell.
 - Login and reset messages do not reveal whether an account exists.
 - `AuthGate` closes any pushed screen whenever the session changes, so logging out never leaves a
@@ -589,6 +589,7 @@ Architecture decision records are in `docs/adr/`:
 | 0002 | Cubit (`flutter_bloc`) for state management               |
 | 0003 | No Cloud Functions; batched writes validated by the rules |
 | 0004 | Named Firebase apps for switching accounts                |
+| 0005 | Optional email verification for students                  |
 
 ## 18. Known limitations
 

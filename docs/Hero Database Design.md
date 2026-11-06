@@ -71,7 +71,7 @@ erDiagram
     AUTH_USER {
         string uid PK "Firebase Auth"
         string email "must end @alustudent.com or @alueducation.com"
-        boolean emailVerified "required true by every rule"
+        boolean emailVerified "required true for staff, optional for students"
         string displayName "profile copy, used until users doc exists"
     }
 
@@ -167,8 +167,8 @@ reportPhotos/{reporterUid}/{reportId}/{randomId}.jpg
 | createdAt   | timestamp | yes      | `request.time`; immutable                                          |
 
 - Doc id is the Auth uid. Exactly these 4 keys.
-- Created by the client on the **first verified sign-in** (rules need `email_verified == true`).
-  Until it exists the app stays on the verification screen. Registration stores the name in the
+- Created by the client on the **first sign-in** (email verification is optional for students, ADR
+  0005). Until it exists the app stays out of the home shell. Registration stores the name in the
   Auth profile (`updateDisplayName`) and the app copies it here.
 - Staff docs are created by you in the Console (see section 10); clients cannot create or change
   `role: "staff"`.
@@ -258,7 +258,7 @@ delete their own notifications (used when they delete a report).
 | Path         | `reporterUid` is the uploader; `randomId` is 8–64 chars of `A-Za-z0-9_-`                                                                                              |
 | Content type | `image/jpeg` only (the app re-encodes everything to JPEG while compressing)                                                                                           |
 | Size         | `< 5 MB`                                                                                                                                                              |
-| Read         | Any verified `@alustudent.com` / `@alueducation.com` user                                                                                                             |
+| Read         | Any `@alustudent.com` user or verified `@alueducation.com` user                                                                                                             |
 | Create       | The student named in the path, if the report does not exist yet (new report, or an upload left over from a failed submit) **or** exists, is theirs and is `submitted` |
 | Update       | Never. Files are immutable; replacing a photo means a new `randomId`                                                                                                  |
 | Delete       | Same condition as create                                                                                                                                              |
@@ -270,7 +270,7 @@ delete their own notifications (used when they delete a report).
 
 | Operation                               | Student                                        | Staff                                         |
 |-----------------------------------------|------------------------------------------------|-----------------------------------------------|
-| Create own `users` doc                  | Yes (verified, student domain, role `student`) | No (Console only)                             |
+| Create own `users` doc                  | Yes (student domain, role `student`) | No (Console only)                             |
 | Read own `users` doc                    | Yes                                            | Yes                                           |
 | Read others' `users` doc                | No                                             | Yes                                           |
 | Edit own `displayName`                  | Yes                                            | No                                            |
@@ -288,7 +288,7 @@ delete their own notifications (used when they delete a report).
 
 | #  | Operation                    | Client steps                                                                                                                                                                                                                                                                                                                                      |
 |----|------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| W1 | First verified sign-in       | Read `users/{uid}`; if missing, `set` it with the 4 fields (`role: "student"`, name from Auth profile).                                                                                                                                                                                                                                           |
+| W1 | First sign-in       | Read `users/{uid}`; if missing, `set` it with the 4 fields (`role: "student"`, name from Auth profile).                                                                                                                                                                                                                                           |
 | W2 | Create report                | Generate `reportId`. Upload each photo to `reportPhotos/{uid}/{reportId}/{randomId}.jpg`. Then **one batch**: `set reports/{reportId}` (status `submitted`, priority `null`, `upvoteCount` 0, `lastHistoryId: "initial"`, `reporterName` from `users`) + `set reports/{reportId}/history/initial`. If the batch fails, delete the uploaded files. |
 | W3 | Edit report                  | Upload any new photos, `update` the report (editable fields + `updatedAt`), then delete removed files from Storage. Only while `submitted`.                                                                                                                                                                                                       |
 | W4 | Delete report                | Read the report's `history`, `upvotes` and the owner's `notifications where reportId == id`. **One batch** deletes the report, all those docs. Then delete the photo files in Storage. Only while `submitted`.                                                                                                                                    |
@@ -327,7 +327,8 @@ Firestore limits that shape the query plan:
 
 Full text is in `firestore.rules` and `storage.rules`. Enforced in addition to the matrix:
 
-- Every request needs `email_verified == true` and a token email on one of the two ALU domains.
+- Every request needs a token email on one of the two ALU domains, and staff also need
+  `email_verified == true` (optional for students, ADR 0005).
   Student actions also require the email to be `@alustudent.com` and
   `users/{uid}.role == 'student'`;
   staff actions require `@alueducation.com` and `role == 'staff'`.
@@ -344,7 +345,7 @@ Full text is in `firestore.rules` and `storage.rules`. Enforced in addition to t
 
 | #  | Case                                                                  | Expected |
 |----|-----------------------------------------------------------------------|----------|
-| 1  | Unverified user reads `reports`                                       | Deny     |
+| 1  | Unverified staff reads `reports`                                      | Deny     |
 | 2  | `@gmail.com` verified user reads `reports`                            | Deny     |
 | 3  | Student creates `users/{uid}` with `role: "staff"`                    | Deny     |
 | 4  | Student creates report with `upvoteCount: 3` / `status: "inProgress"` | Deny     |
@@ -375,7 +376,7 @@ Full text is in `firestore.rules` and `storage.rules`. Enforced in addition to t
 | Provider          | Email/Password enabled; no other providers                                                                                                                    |
 | Registration      | Student form accepts `@alustudent.com` only; sets Auth display name; sends verification email                                                                 |
 | Staff             | Pre-created in the Console, `@alueducation.com`; they are never registered through the app                                                                    |
-| Verification gate | App stays on the verify screen until `emailVerified` is true and `users/{uid}` exists (created by W1 for students)                                            |
+| Verification gate | Staff stay on the verify screen until `emailVerified` is true. Students may skip it; `users/{uid}` comes from W1                                            |
 | Role source       | Only `users/{uid}.role` in Firestore. No custom claims, no client-supplied role                                                                               |
 | Password rules    | Min 8 chars with a letter and a number are enforced in the app; Firebase Auth itself only enforces its own minimum, so the rules do not and cannot check this |
 | Password reset    | Firebase `sendPasswordResetEmail`; no Firestore involvement                                                                                                   |
@@ -408,7 +409,7 @@ Full text is in `firestore.rules` and `storage.rules`. Enforced in addition to t
 2. Firestore → `users/{uid}` with fields `displayName` (string), `email` (string, identical to
    the Auth email), `role` = `staff` (string), `createdAt` (timestamp).
 3. The staff member signs in once and verifies through the emailed link (Console-created users
-   start unverified, and the rules reject unverified users).
+   start unverified, and the rules reject unverified staff).
 
 **Region (open item)**: Firestore and Storage locations cannot be changed after creation. Planned:
 `africa-south1` for both, for the Kigali campus. **Verify availability for both products before
@@ -444,5 +445,5 @@ creating them** and pick the closest supported region if it is not available.
 | `room` optional                                                  | Always present, `""` when empty                                                         | Fixed key set                                                                                       |
 | Rules deny history delete                                        | Owner may delete history, votes, notifications as part of deleting a `submitted` report | Hard delete must not leave orphans                                                                  |
 | 2 indexes                                                        | 23 indexes                                                                              | All filter, sort and search combinations supported on the server                                    |
-| `users` doc created at registration                              | Created at first verified sign-in                                                       | Rules require a verified email for every write                                                      |
+| `users` doc created at registration                              | Created at first sign-in                                                       | Rules require a verified email for every write                                                      |
 | Region unspecified                                               | `africa-south1` planned, to verify                                                      | Location is permanent                                                                               |

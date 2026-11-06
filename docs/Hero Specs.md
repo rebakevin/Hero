@@ -21,7 +21,7 @@ two roles, one report lifecycle, no admin console.
 | Area                | Decision                                                                                |
 |---------------------|-----------------------------------------------------------------------------------------|
 | Roles               | `student` and `staff` only; no departments                                              |
-| Student email       | `@alustudent.com`, email verification required                                          |
+| Student email       | `@alustudent.com`, email verification optional                                          |
 | Staff email         | `@alueducation.com`, role set manually in Firestore                                     |
 | Categories          | Facilities, Water shortage, Electricity outage, Damaged furniture, Sanitation, Safety   |
 | Location            | Fixed list of campus buildings (+ optional room text)                                   |
@@ -54,8 +54,9 @@ Students register themselves; staff accounts are created by you in the Firebase 
 - Staff log in with `@alueducation.com` accounts that you pre-create (Auth user + `users/{uid}` doc
   with `role: "staff"`).
 - Any other domain is rejected at the form and by a Firestore rule check on the token email.
-- Users must verify their email (link sent by Firebase) before the app lets them past the
-  verification screen. Rules also require `email_verified == true`.
+- Staff must verify their email (link sent by Firebase) before the app lets them past the
+  verification screen, and the rules require it. For students it is optional (ADR 0005): they get
+  the same link and can verify later from Profile.
 - Session persists across restarts; logout returns to the login screen.
 
 **Permissions matrix**
@@ -81,7 +82,7 @@ Students register themselves; staff accounts are created by you in the Firebase 
 
 - Email + password registration (student domain only), login, logout, password reset.
 - Verification screen with "Resend email" and "I've verified" (reloads the user).
-- Auth gate at app root: unauthenticated → login; unverified → verification; verified → home by
+- Auth gate at app root: unauthenticated → login; unverified staff → verification; otherwise → home by
   role.
 
 **3.2 Report submission (students)**
@@ -143,7 +144,7 @@ Students register themselves; staff accounts are created by you in the Firebase 
 
 1. Open app → login screen → tap Register.
 2. Enter name, `@alustudent.com` email, password → submit.
-3. Verification screen: open email link → tap "I've verified" → home.
+3. Home straight away. To verify: Profile → Verify email → open the link → tap "I've verified".
 
 **Student: report an incident**
 

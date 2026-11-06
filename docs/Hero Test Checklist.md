@@ -28,15 +28,15 @@ last column or in section 6. Results go in the report.
 |-----|-------------------------------------------------------|--------------------------------------------------------------------------|------|
 | 1.1 | Register with `name@gmail.com`                        | Field error asking for an `@alustudent.com` email; nothing is created    | [ ]  |
 | 1.2 | Register with weak passwords ("short", "allletters")  | Field errors for length and for the missing number; confirm must match   | [ ]  |
-| 1.3 | Register Student A with a valid email                 | Verification screen appears; a verification email arrives                | [ ]  |
-| 1.4 | Tap "I've verified" before opening the link           | Message that the email is not verified yet; stays on the screen          | [ ]  |
-| 1.5 | Open the link, tap "I've verified"                    | Lands on the student Home                                                | [ ]  |
+| 1.3 | Register Student A with a valid email                 | Lands on Home; Profile shows "Verify email"; a verification email arrives | [ ]  |
+| 1.4 | Profile > Verify email, "I've verified" before the link           | Message that the email is not verified yet; stays on the screen          | [ ]  |
+| 1.5 | Open the link, tap "I've verified"                    | Back on Profile; "Verify email" is gone                                  | [ ]  |
 | 1.6 | Resend the verification email                         | Confirmation message; a new email arrives                                | [ ]  |
 | 1.7 | Log out, log in with a wrong password                 | Generic "email or password is incorrect"; does not say which one         | [ ]  |
 | 1.8 | Log in with an unknown email                          | The same generic message                                                 | [ ]  |
 | 1.9 | Reset password                                        | Confirmation shown for any email; reset email arrives for a real one     | [ ]  |
 | 1.10| Close and reopen the app while logged in              | Goes straight to Home (session restored)                                 | [ ]  |
-| 1.11| Log in as an unverified account                       | Held on the verification screen, never reaches Home                      | [ ]  |
+| 1.11| Log in as an unverified staff account                 | Held on the verification screen, never reaches the staff shell           | [ ]  |
 | 1.12| Log in as staff                                       | Staff shell: Needs action, All reports, Profile                          | [ ]  |
 | 1.13| Student shell                                         | Home, My reports, Alerts, Profile only; no staff screens reachable       | [ ]  |
 
@@ -120,7 +120,7 @@ photos now live in Supabase, so they do not apply (Technical Documentation, sect
 
 | #  | Case                                                                  | Expected | Automated | Console check |
 |----|-----------------------------------------------------------------------|----------|-----------|---------------|
-| 1  | Unverified user reads `reports`                                       | Deny     | Pass      | [ ]           |
+| 1  | Unverified staff reads `reports`                                      | Deny     | Pass      | [ ]           |
 | 2  | `@gmail.com` verified user reads `reports`                            | Deny     | Pass      | [ ]           |
 | 3  | Student creates `users/{uid}` with `role: "staff"`                    | Deny     | Pass      | [ ]           |
 | 4  | Student creates report with `upvoteCount: 3` / `status: "inProgress"` | Deny     | Pass      | [ ]           |
