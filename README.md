@@ -7,9 +7,11 @@ set a status and priority with a note, and the reporter is notified.
 Firebase Auth and Cloud Firestore hold identity and data. Supabase Storage holds report photos
 (Firebase Storage needs the paid plan).
 
-## Design system
+## Links
 
-[Hero Design System](https://rebakevin.github.io/Hero/)
+- [Technical document](https://docs.google.com/document/d/1uZB3Dp4kdKQSVvQJj5ovkp2AhRga8SXa8q2uLNk1wgI/edit?tab=t.0)
+- [Hero Design System](https://rebakevin.github.io/Hero/)
+- [YouTube Demo Video](https://www.youtube.com/watch?v=t44vSF5tcMU)
 
 ## Set up
 
