@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 
 import '../domain/auth_failure.dart';
@@ -8,9 +10,14 @@ class FirebaseAuthRepository implements AuthRepository {
   FirebaseAuthRepository(this._auth);
 
   final FirebaseAuth _auth;
+  Future<void> _nameSaved = Future.value();
 
+  // A new account's session waits for its name, or W1 would copy a missing one.
   @override
-  Stream<AuthUser?> sessionChanges() => _auth.userChanges().map(_toAuthUser);
+  Stream<AuthUser?> sessionChanges() => _auth.userChanges().asyncMap((_) async {
+    await _nameSaved;
+    return _toAuthUser(_auth.currentUser);
+  });
 
   @override
   Future<void> signIn({required String email, required String password}) =>
@@ -25,13 +32,18 @@ class FirebaseAuthRepository implements AuthRepository {
     required String email,
     required String password,
   }) => _guard(() async {
-    final credential = await _auth.createUserWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
-    final user = credential.user!;
-    await user.updateDisplayName(displayName);
-    await user.sendEmailVerification();
+    final nameSaved = Completer<void>();
+    _nameSaved = nameSaved.future;
+    try {
+      final credential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      await credential.user!.updateDisplayName(displayName);
+    } finally {
+      nameSaved.complete();
+    }
+    await _auth.currentUser!.sendEmailVerification();
   });
 
   @override
