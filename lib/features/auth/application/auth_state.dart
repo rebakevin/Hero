@@ -30,15 +30,16 @@ final class EmailUnverified extends AuthState {
 }
 
 final class Authenticated extends AuthState {
-  const Authenticated(this.user);
+  const Authenticated(this.user, {this.emailVerified = true});
 
   final AppUser user;
+  final bool emailVerified;
 
   @override
-  List<Object?> get props => [user];
+  List<Object?> get props => [user, emailVerified];
 }
 
-/// Signed in and verified, but the profile could not be loaded or created.
+/// Signed in, but the profile could not be loaded or created.
 final class AuthProfileFailed extends AuthState {
   const AuthProfileFailed(this.failure);
 

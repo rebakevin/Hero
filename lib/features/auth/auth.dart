@@ -14,3 +14,4 @@ export 'domain/user_repository.dart';
 export 'presentation/accounts_screen.dart';
 export 'presentation/auth_failure_message.dart';
 export 'presentation/auth_gate.dart';
+export 'presentation/verify_email_screen.dart';

@@ -23,6 +23,13 @@ const unverifiedAuthUser = AuthUser(
   displayName: 'Amina Hassan',
 );
 
+const unverifiedStaffAuthUser = AuthUser(
+  uid: 'staff-1',
+  email: 'kevin@alueducation.com',
+  emailVerified: false,
+  displayName: 'Kevin',
+);
+
 final studentProfile = AppUser(
   uid: 'student-1',
   displayName: 'Amina Hassan',

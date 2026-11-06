@@ -78,6 +78,7 @@ class _ProfileView extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             Center(child: _RoleChip(label: user.role.label)),
             const SizedBox(height: AppSpacing.xl),
+            _VerifyEmailPrompt(email: user.email),
             if (!user.isStaff) ...[
               BlocBuilder<ProfileCubit, ProfileState>(
                 builder: (context, state) => AppButton(
@@ -104,6 +105,31 @@ class _ProfileView extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _VerifyEmailPrompt extends StatelessWidget {
+  const _VerifyEmailPrompt({required this.email});
+
+  final String email;
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocSelector<AuthCubit, AuthState, bool>(
+      selector: (state) => state is Authenticated && !state.emailVerified,
+      builder: (context, unverified) {
+        if (!unverified) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.md),
+          child: AppButton(
+            label: 'Verify email',
+            onPressed: () =>
+                Navigator.of(context)
+                    .push(VerifyEmailScreen.optionalRoute(email)),
+          ),
+        );
+      },
     );
   }
 }

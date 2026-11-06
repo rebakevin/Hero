@@ -14,6 +14,17 @@ import 'auth_failure_message.dart';
 class VerifyEmailScreen extends StatelessWidget {
   const VerifyEmailScreen({super.key, required this.email, this.footer});
 
+  /// For a signed-in student, who can verify now or leave it for later.
+  static Route<void> optionalRoute(String email) => MaterialPageRoute(
+    builder: (context) => VerifyEmailScreen(
+      email: email,
+      footer: TextButton(
+        onPressed: () => Navigator.of(context).pop(),
+        child: const Text('Not now'),
+      ),
+    ),
+  );
+
   final String email;
   final Widget? footer;
 

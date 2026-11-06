@@ -28,11 +28,50 @@ void main() {
   );
 
   blocTest<AuthCubit, AuthState>(
-    'holds an unverified user at the verification step without loading a profile',
+    'holds unverified staff at the verification step without loading a profile',
+    build: buildCubit,
+    act: (_) => auth.session.add(unverifiedStaffAuthUser),
+    expect: () => [const EmailUnverified('kevin@alueducation.com')],
+    verify: (_) => expect(users.loads, 0),
+  );
+
+  blocTest<AuthCubit, AuthState>(
+    'lets an unverified student in and remembers they have not verified',
     build: buildCubit,
     act: (_) => auth.session.add(unverifiedAuthUser),
-    expect: () => [const EmailUnverified('amina@alustudent.com')],
-    verify: (_) => expect(users.loads, 0),
+    expect: () => [Authenticated(studentProfile, emailVerified: false)],
+  );
+
+  blocTest<AuthCubit, AuthState>(
+    'marks a student verified without reloading the profile',
+    build: buildCubit,
+    act: (_) async {
+      auth.session.add(unverifiedAuthUser);
+      await settle();
+      auth.session.add(studentAuthUser);
+    },
+    expect: () => [
+      Authenticated(studentProfile, emailVerified: false),
+      Authenticated(studentProfile),
+    ],
+    verify: (_) => expect(users.loads, 1),
+  );
+
+  blocTest<AuthCubit, AuthState>(
+    'applyRename keeps the verification status',
+    build: buildCubit,
+    act: (cubit) async {
+      auth.session.add(unverifiedAuthUser);
+      await settle();
+      cubit.applyRename('Amina H.');
+    },
+    skip: 1,
+    expect: () => [
+      Authenticated(
+        studentProfile.copyWith(displayName: 'Amina H.'),
+        emailVerified: false,
+      ),
+    ],
   );
 
   blocTest<AuthCubit, AuthState>(
@@ -43,15 +82,15 @@ void main() {
   );
 
   blocTest<AuthCubit, AuthState>(
-    'moves from unverified to authenticated once the user verifies',
+    'moves staff from unverified to authenticated once they verify',
     build: buildCubit,
     act: (_) async {
-      auth.session.add(unverifiedAuthUser);
+      auth.session.add(unverifiedStaffAuthUser);
       await settle();
       auth.session.add(studentAuthUser);
     },
     expect: () => [
-      const EmailUnverified('amina@alustudent.com'),
+      const EmailUnverified('kevin@alueducation.com'),
       const AuthChecking(),
       Authenticated(studentProfile),
     ],

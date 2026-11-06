@@ -33,13 +33,18 @@ class AuthCubit extends Cubit<AuthState> {
   void applyRename(String displayName) {
     final current = state;
     if (current is Authenticated) {
-      emit(Authenticated(current.user.copyWith(displayName: displayName)));
+      emit(
+        Authenticated(
+          current.user.copyWith(displayName: displayName),
+          emailVerified: current.emailVerified,
+        ),
+      );
     }
   }
 
   Future<void> retry() async {
     final user = _sessionUser;
-    if (user != null && user.emailVerified) await _loadProfile(user);
+    if (user != null && !user.mustVerifyEmail) await _loadProfile(user);
   }
 
   Future<void> _onSessionChanged(AuthUser? user) async {
@@ -47,7 +52,7 @@ class AuthCubit extends Cubit<AuthState> {
     if (user == null) {
       _generation++;
       emit(const Unauthenticated());
-    } else if (!user.emailVerified) {
+    } else if (user.mustVerifyEmail) {
       _generation++;
       emit(EmailUnverified(user.email));
     } else {
@@ -57,15 +62,18 @@ class AuthCubit extends Cubit<AuthState> {
 
   Future<void> _loadProfile(AuthUser user) async {
     final current = state;
-    // Token refreshes re-emit the same user; nothing to reload.
-    if (current is Authenticated && current.user.uid == user.uid) return;
+    // Token refreshes re-emit the same user; only verification can have changed.
+    if (current is Authenticated && current.user.uid == user.uid) {
+      emit(Authenticated(current.user, emailVerified: user.emailVerified));
+      return;
+    }
 
     final generation = ++_generation;
     if (state is! AuthChecking) emit(const AuthChecking());
     try {
       final profile = await _users.loadOrCreateStudent(user);
       if (_isStale(generation)) return;
-      emit(Authenticated(profile));
+      emit(Authenticated(profile, emailVerified: user.emailVerified));
     } on AuthException catch (error) {
       if (_isStale(generation)) return;
       emit(AuthProfileFailed(error.failure));
