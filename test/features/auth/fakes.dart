@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:hero/features/auth/domain/account_sessions.dart';
 import 'package:hero/features/auth/domain/app_user.dart';
 import 'package:hero/features/auth/domain/auth_failure.dart';
 import 'package:hero/features/auth/domain/auth_repository.dart';
 import 'package:hero/features/auth/domain/auth_user.dart';
+import 'package:hero/features/auth/domain/device_account.dart';
 import 'package:hero/features/auth/domain/role.dart';
 import 'package:hero/features/auth/domain/user_repository.dart';
 
@@ -28,6 +30,52 @@ final studentProfile = AppUser(
   role: Role.student,
   createdAt: DateTime(2026, 11, 1),
 );
+
+class FakeAccountSessions implements AccountSessions {
+  List<DeviceAccount> list = const [
+    DeviceAccount(
+      slot: '[DEFAULT]',
+      email: 'amina@alustudent.com',
+      displayName: 'Amina Hassan',
+      isActive: true,
+    ),
+    DeviceAccount(
+      slot: 'account1',
+      email: 'kevin@alueducation.com',
+      isActive: false,
+    ),
+  ];
+  bool canAdd = true;
+  Object? error;
+  final activated = <String>[];
+
+  @override
+  String get activeSlot => '[DEFAULT]';
+
+  @override
+  Stream<String> activeSlotChanges() => const Stream.empty();
+
+  @override
+  Future<List<DeviceAccount>> accounts() async {
+    if (error != null) throw error!;
+    return list;
+  }
+
+  @override
+  bool get canAddAccount => canAdd;
+
+  @override
+  Future<void> switchTo(String slot) async {
+    if (error != null) throw error!;
+    activated.add(slot);
+  }
+
+  @override
+  Future<void> addAccount() async {
+    if (error != null) throw error!;
+    activated.add('add');
+  }
+}
 
 class FakeAuthRepository implements AuthRepository {
   final session = StreamController<AuthUser?>.broadcast();
