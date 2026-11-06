@@ -9,14 +9,14 @@ Firebase Auth and Cloud Firestore hold identity and data. Supabase Storage holds
 
 ## Documentation
 
-| Document                                 | What it covers                                              |
-|------------------------------------------|-------------------------------------------------------------|
-| `docs/Hero Specs.md`                     | Features, flows, screens, validation rules                  |
-| `docs/Hero Database Design.md`           | Collections, security rules, write batches, indexes         |
-| `docs/Hero Technical Documentation.md`   | How the app is built: architecture, state, data flow, security, testing |
-| `docs/Hero Test Checklist.md`            | Manual test checklist and the security rules cases          |
-| `docs/Hero Todo.md`                      | The phased plan and its progress                            |
-| `docs/adr/`                              | Architecture decision records                               |
+| Document                               | What it covers                                                          |
+|----------------------------------------|-------------------------------------------------------------------------|
+| `docs/Hero Specs.md`                   | Features, flows, screens, validation rules                              |
+| `docs/Hero Database Design.md`         | Collections, security rules, write batches, indexes                     |
+| `docs/Hero Technical Documentation.md` | How the app is built: architecture, state, data flow, security, testing |
+| `docs/Hero Test Checklist.md`          | Manual test checklist and the security rules cases                      |
+| `docs/Hero Todo.md`                    | The phased plan and its progress                                        |
+| `docs/adr/`                            | Architecture decision records                                           |
 
 ## Set up
 
@@ -33,10 +33,33 @@ select policies limited to the `reportPhotos/` prefix.
 
 ## Run
 
+### Pixel 8 emulator
+
 ```bash
 ~/Library/Android/sdk/emulator/emulator -avd Pixel_8 &
+~/Library/Android/sdk/platform-tools/adb wait-for-device shell 'while [ "$(getprop sys.boot_completed)" != "1" ]; do sleep 2; done'
 flutter run -d emulator-5554
 ```
+
+### Physical Pixel 8
+
+```bash
+flutter run -d "Pixel 8"
+```
+
+### Stop
+
+Press `q` in the `flutter run` terminal, or:
+
+```bash
+# Pixel 8 emulator
+~/Library/Android/sdk/platform-tools/adb -s emulator-5554 emu kill
+
+# Physical Pixel 8
+~/Library/Android/sdk/platform-tools/adb -d shell am force-stop com.alu.hero
+```
+
+## Staff accounts
 
 Staff accounts are not created in the app. Create the user in the Firebase Console, then:
 
