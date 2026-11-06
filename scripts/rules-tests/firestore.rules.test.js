@@ -152,9 +152,27 @@ beforeEach(async () => {
 });
 
 describe("1-2. identity", () => {
-  it("1. unverified user reads reports -> deny", async () => {
+  it("1. unverified staff reads reports -> deny", async () => {
     await seedReport();
-    await assertFails(getDoc(doc(as(STUDENT, { verified: false }), "reports/r1")));
+    await assertFails(getDoc(doc(as(STAFF, { verified: false }), "reports/r1")));
+  });
+
+  it("unverified student reads reports -> allow", async () => {
+    await seedReport();
+    await assertSucceeds(getDoc(doc(as(STUDENT, { verified: false }), "reports/r1")));
+  });
+
+  it("unverified @gmail.com user reads reports -> deny", async () => {
+    await seedReport();
+    const gmail = { uid: "gmail1", email: "someone@gmail.com" };
+    await assertFails(getDoc(doc(as(gmail, { verified: false }), "reports/r1")));
+  });
+
+  it("unverified staff updates a report -> deny", async () => {
+    await seedReport();
+    await assertFails(
+      updateDoc(doc(as(STAFF, { verified: false }), "reports/r1"), { status: "resolved" }),
+    );
   });
 
   it("2. verified @gmail.com user reads reports -> deny", async () => {
@@ -174,6 +192,26 @@ describe("users", () => {
     const fresh = { uid: "student3", email: "chidi@alustudent.com", name: "Chidi Eze" };
     await assertSucceeds(
       setDoc(doc(as(fresh), `users/${fresh.uid}`), { ...userDoc(fresh), createdAt: serverTimestamp() }),
+    );
+  });
+
+  it("first unverified sign-in creates a student profile -> allow", async () => {
+    const fresh = { uid: "student3", email: "chidi@alustudent.com", name: "Chidi Eze" };
+    await assertSucceeds(
+      setDoc(doc(as(fresh, { verified: false }), `users/${fresh.uid}`), {
+        ...userDoc(fresh),
+        createdAt: serverTimestamp(),
+      }),
+    );
+  });
+
+  it("unverified staff-domain user creates a profile -> deny", async () => {
+    const fresh = { uid: "staff2", email: "new@alueducation.com", name: "New Staff" };
+    await assertFails(
+      setDoc(doc(as(fresh, { verified: false }), `users/${fresh.uid}`), {
+        ...userDoc(fresh),
+        createdAt: serverTimestamp(),
+      }),
     );
   });
 
