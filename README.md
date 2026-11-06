@@ -5,18 +5,7 @@ problems on campus with photos and vote "me too" on reports they share. Staff re
 set a status and priority with a note, and the reporter is notified.
 
 Firebase Auth and Cloud Firestore hold identity and data. Supabase Storage holds report photos
-(Firebase Storage needs the paid plan; see `docs/adr/0001-supabase-for-photo-storage.md`).
-
-## Documentation
-
-| Document                               | What it covers                                                          |
-|----------------------------------------|-------------------------------------------------------------------------|
-| `docs/Hero Specs.md`                   | Features, flows, screens, validation rules                              |
-| `docs/Hero Database Design.md`         | Collections, security rules, write batches, indexes                     |
-| `docs/Hero Technical Documentation.md` | How the app is built: architecture, state, data flow, security, testing |
-| `docs/Hero Test Checklist.md`          | Manual test checklist and the security rules cases                      |
-| `docs/Hero Todo.md`                    | The phased plan and its progress                                        |
-| `docs/adr/`                            | Architecture decision records                                           |
+(Firebase Storage needs the paid plan).
 
 ## Set up
 
