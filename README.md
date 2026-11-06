@@ -9,8 +9,7 @@ Firebase Auth and Cloud Firestore hold identity and data. Supabase Storage holds
 
 ## Design system
 
-[Hero Design System](https://rebakevin.github.io/Hero/): colors, type and components used by the app
-(source: [`index.html`](index.html)).
+[Hero Design System](https://rebakevin.github.io/Hero/)
 
 ## Set up
 
