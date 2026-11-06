@@ -7,6 +7,11 @@ set a status and priority with a note, and the reporter is notified.
 Firebase Auth and Cloud Firestore hold identity and data. Supabase Storage holds report photos
 (Firebase Storage needs the paid plan).
 
+## Design system
+
+[Hero Design System](https://rebakevin.github.io/Hero/): colors, type and components used by the app
+(source: [`index.html`](index.html)).
+
 ## Set up
 
 You need the Flutter SDK, the Android SDK with an AVD named `Pixel_8`, Node.js, and the Firebase
