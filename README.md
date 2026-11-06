@@ -47,6 +47,15 @@ flutter run -d emulator-5554
 flutter run -d "Pixel 8"
 ```
 
+### Install on physical Pixel 8
+
+Stays on the phone after you unplug the cable.
+
+```bash
+flutter build apk --release
+~/Library/Android/sdk/platform-tools/adb -d install -r build/app/outputs/flutter-apk/app-release.apk
+``` 
+
 ### Stop
 
 Press `q` in the `flutter run` terminal, or:
