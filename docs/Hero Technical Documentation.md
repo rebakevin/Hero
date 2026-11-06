@@ -110,12 +110,13 @@ lib/
   shared/widgets/                Generic widgets: AppButton, AppTextField, AppDropdownField,
                                  EmptyState, ErrorView, ErrorBanner, PasswordField, HeroLogo
   features/
-    auth/          21 files      Register, verify, login, reset, session, role, rename (W1, W8)
+    auth/          28 files      Register, verify, login, reset, session, role, rename (W1, W8),
+                                 switching between accounts on the device
     reports/       67 files      Reports, photos, history, votes, status updates (W2 to W6)
     notifications/ 12 files      Student alerts and the unread badge (W7)
     profile/        4 files      Profile screen and display name change
     home/           2 files      Role-based bottom navigation shell
-test/                            Mirrors lib/ (22 test files)
+test/                            Mirrors lib/ (24 test files)
 scripts/
   seed-staff.js                  Creates a staff user's verified flag and users/{uid} document
   rules-tests/                   Firestore rules tests on the emulator
@@ -188,6 +189,7 @@ Two small contracts exist because of these rules:
 |-----------------------|---------------|---------------------------------|------------------------------------------------------------------------------|-------------------------------------|
 | `AuthCubit`           | auth          | App root                        | Checking, Unauthenticated, EmailUnverified, Authenticated, AuthProfileFailed | Auth session stream + `users/{uid}` |
 | `AuthFormCubit`       | auth          | Each auth screen                | Idle, Submitting, Failed, Succeeded                                          | One-off auth calls                  |
+| `AccountsCubit`       | auth          | Accounts screen, switch link    | Loading, Loaded, Failed                                                      | `AccountSessions` (ADR 0004)        |
 | `ReportsCubit`        | reports       | Each list tab (one per tab)     | Loading, Loaded, Empty, Failure                                              | `watchReports(query, limit)`        |
 | `ReportDetailCubit`   | reports       | Details screen                  | Loading, Loaded, Deleting, DeleteFailed, Deleted, Missing, Failure           | `watchReport(id)`                   |
 | `ReportHistoryCubit`  | reports       | Details screen                  | Loading, Loaded, Failure                                                     | `watchHistory(id)`                  |
@@ -586,6 +588,7 @@ Architecture decision records are in `docs/adr/`:
 | 0001 | Supabase Storage for photos instead of Firebase Storage   |
 | 0002 | Cubit (`flutter_bloc`) for state management               |
 | 0003 | No Cloud Functions; batched writes validated by the rules |
+| 0004 | Named Firebase apps for switching accounts                |
 
 ## 18. Known limitations
 

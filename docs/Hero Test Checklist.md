@@ -104,6 +104,11 @@ last column or in section 6. Results go in the report.
 | 5.4 | Log out from Profile                                  | Back to Login; no private screen left on top                             | [ ]  |
 | 5.5 | Rotate / large font size / smaller phone              | No overflow errors; forms scroll                                         | [ ]  |
 | 5.6 | Every list and details screen                         | Spinner while loading, empty message, error with Retry (airplane mode)   | [ ]  |
+| 5.7 | Profile > Switch account > Add, log in as a second user | Second user's home; first account listed under Switch account          | [ ]  |
+| 5.8 | Tap the other account                                 | Opens with no password; shows only that account's reports and role       | [ ]  |
+| 5.9 | Restart the app after switching                       | Reopens on the last account; both stay listed                            | [ ]  |
+| 5.10| Log out of one account                                | Login screen; only the other account listed under "Use a signed-in account" | [ ]  |
+| 5.11| Add an account that is already listed                 | Listed once only                                                         | [ ]  |
 | 5.7 | Submit buttons while a request runs                   | Show a spinner and cannot be tapped twice                                | [ ]  |
 | 5.8 | Photos that fail to load (turn off network after opening a list) | A grey placeholder; the rest of the card is intact            | [ ]  |
 
