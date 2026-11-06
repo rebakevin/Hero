@@ -9,6 +9,7 @@ import '../application/auth_state.dart';
 import '../domain/app_user.dart';
 import 'auth_failure_message.dart';
 import 'login_screen.dart';
+import 'switch_account_link.dart';
 import 'verify_email_screen.dart';
 
 /// Chooses the root screen from the session state. Screens pushed over the
@@ -26,8 +27,11 @@ class AuthGate extends StatelessWidget {
           Navigator.of(context).popUntil((route) => route.isFirst),
       builder: (context, state) => switch (state) {
         AuthChecking() => const _Splash(),
-        Unauthenticated() => const LoginScreen(),
-        EmailUnverified(:final email) => VerifyEmailScreen(email: email),
+        Unauthenticated() => const LoginScreen(footer: SwitchAccountLink()),
+        EmailUnverified(:final email) => VerifyEmailScreen(
+          email: email,
+          footer: const SwitchAccountLink(),
+        ),
         Authenticated(:final user) => authenticatedBuilder(context, user),
         AuthProfileFailed(:final failure) => Scaffold(
           body: SafeArea(

@@ -12,23 +12,25 @@ import '../domain/auth_repository.dart';
 import 'auth_failure_message.dart';
 
 class VerifyEmailScreen extends StatelessWidget {
-  const VerifyEmailScreen({super.key, required this.email});
+  const VerifyEmailScreen({super.key, required this.email, this.footer});
 
   final String email;
+  final Widget? footer;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => AuthFormCubit(context.read<AuthRepository>()),
-      child: _VerifyEmailView(email: email),
+      child: _VerifyEmailView(email: email, footer: footer),
     );
   }
 }
 
 class _VerifyEmailView extends StatelessWidget {
-  const _VerifyEmailView({required this.email});
+  const _VerifyEmailView({required this.email, this.footer});
 
   final String email;
+  final Widget? footer;
 
   String? _messageFor(AuthFormOutcome outcome) => switch (outcome) {
     AuthFormOutcome.verificationEmailSent => 'Verification email sent.',
@@ -116,6 +118,7 @@ class _VerifyEmailView extends StatelessWidget {
                         : context.read<AuthCubit>().signOut,
                     child: const Text('Log out'),
                   ),
+                  ?footer,
                 ],
               ),
             );

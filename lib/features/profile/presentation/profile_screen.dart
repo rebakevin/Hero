@@ -9,7 +9,7 @@ import '../../auth/auth.dart';
 import '../application/profile_cubit.dart';
 import '../application/profile_state.dart';
 
-/// Account details, display name editing (students) and log out.
+/// Account details, display name editing (students), switching account and log out.
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key, required this.user});
 
@@ -89,6 +89,13 @@ class _ProfileView extends StatelessWidget {
               ),
               const SizedBox(height: AppSpacing.md),
             ],
+            AppButton(
+              label: 'Switch account',
+              style: AppButtonStyle.tonal,
+              onPressed: () =>
+                  Navigator.of(context).push(AccountsScreen.route()),
+            ),
+            const SizedBox(height: AppSpacing.md),
             AppButton(
               label: 'Log out',
               style: AppButtonStyle.outlined,

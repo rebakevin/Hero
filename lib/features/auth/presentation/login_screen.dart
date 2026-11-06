@@ -17,19 +17,23 @@ import 'forgot_password_screen.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatelessWidget {
-  const LoginScreen({super.key});
+  const LoginScreen({super.key, this.footer});
+
+  final Widget? footer;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => AuthFormCubit(context.read<AuthRepository>()),
-      child: const _LoginForm(),
+      child: _LoginForm(footer: footer),
     );
   }
 }
 
 class _LoginForm extends StatefulWidget {
-  const _LoginForm();
+  const _LoginForm({this.footer});
+
+  final Widget? footer;
 
   @override
   State<_LoginForm> createState() => _LoginFormState();
@@ -150,6 +154,7 @@ class _LoginFormState extends State<_LoginForm> {
                           ),
                         ],
                       ),
+                      ?widget.footer,
                     ],
                   ),
                 ),
