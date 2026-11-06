@@ -20,7 +20,7 @@ service cloud.firestore {
     }
     function studentEmail() { return request.auth.token.email.matches('.*@alustudent[.]com'); }
     function staffEmail() { return request.auth.token.email.matches('.*@alueducation[.]com'); }
-    // Verifying is optional for students (ADR 0005). Staff must still verify.
+    // Verifying is optional for students. Staff must still verify.
     function student() { return request.auth != null && studentEmail(); }
     function signedIn() { return student() || (verified() && staffEmail()); }
 

@@ -9,7 +9,7 @@ import '../domain/account_sessions.dart';
 import '../domain/device_account.dart';
 
 /// One slot per named [FirebaseApp]: each app persists its own Auth session and
-/// Firestore cache, so switching needs no stored password. See ADR 0004.
+/// Firestore cache, so switching needs no stored password.
 class FirebaseAccountSessions implements AccountSessions {
   FirebaseAccountSessions({
     required List<FirebaseApp> apps,

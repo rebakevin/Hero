@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-/// Enforces the dependency rules from docs/code-conventions/architecture.md.
+/// Enforces the layering and dependency rules between features.
 void main() {
   const sdks = [
     'package:cloud_firestore/',

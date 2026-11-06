@@ -11,6 +11,5 @@ skills-lock.json
 build/
 *.iml
 CLAUDE.md
-docs/code-conventions/
 node_modules/
 *-debug.log

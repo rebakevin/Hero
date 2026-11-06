@@ -1,5 +1,4 @@
-// Automates the 23 Rules Playground cases from docs/Hero Database Design.md, section 8,
-// plus the allowed paths they depend on. Run with `npm test` (starts the Firestore emulator).
+// Automates the 23 Rules Playground cases, plus the allowed paths they depend on. Run with `npm test` (starts the Firestore emulator).
 // Cases 22 and 23 cover Firebase Storage; photos moved to Supabase, so they are skipped here.
 const { readFileSync } = require("node:fs");
 const path = require("node:path");
@@ -401,8 +400,7 @@ describe("staff update (W5)", () => {
     await assertFails(staffUpdateBatch(as(STAFF), { withHistory: false }).commit());
   });
 
-  // Known gap (Database Design section 8 says this is enforced, but the report holds no pointer to
-  // the notification, so the rules cannot require it). The app always writes it. If the schema
+  // Known gap: the report holds no pointer to the notification, so the rules cannot require it. The app always writes it. If the schema
   // gains a lastNotificationId, flip this to assertFails.
   it("known gap: update without the reporter's notification -> allowed", async () => {
     await seedReport();
